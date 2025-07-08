@@ -2,13 +2,12 @@
   command = "pnpm install && pnpm run build"
   publish = "dist"
 
-[build.environment]
-  # Variables d'environnement pour le build
-  # ⚠️ IMPORTANT: Configurez ces variables dans Netlify Dashboard
-  # Site Settings → Environment variables
-  VITE_SUPABASE_URL = "https://votre-projet.supabase.co"
-  VITE_SUPABASE_ANON_KEY = "votre-clé-anon-supabase"
-  SITE_URL = "https://manouvellemission.com"
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
 
 [[redirects]]
   from = "/*"
