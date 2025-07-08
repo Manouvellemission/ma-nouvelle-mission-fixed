@@ -1,0 +1,19 @@
+nohup: ignoring input
+
+> ma-nouvelle-mission-fixed@0.0.0 dev
+> vite --host
+
+Port 5174 is in use, trying another one...
+Port 5175 is in use, trying another one...
+Port 5176 is in use, trying another one...
+
+  VITE v6.3.5  ready in 523 ms
+
+  ➜  Local:   http://localhost:5177/2:35:57 PM [vite] vite.config.js changed, r2:35:57 PM [vite] viPort 5177 is in use, trying another one...
+2:35:57 PM [vite] server restarted.
+2:38:06 PM [vite] (client) page reload public/success.html
+2:38:06 PM [vite] (client) page reload public/success.html
+t:5180/
+  ➜  Netwo2:38:06 PM [vite] (client) page reload public/success.html
+2:38:06 PM [vite] (client) page reload public/success.html
+ge reload public/success.html
