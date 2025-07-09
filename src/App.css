@@ -152,6 +152,46 @@
   .no-print {
     display: none !important;
   }
+
+  /* ✅ CORRECTION POUR LES DESCRIPTIONS QUI DÉBORDENT */
+.job-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  line-height: 1.5;
+  max-height: 4.5em; /* 3 lignes × 1.5 line-height */
+}
+
+/* Assurer que les cartes ont une hauteur cohérente */
+.mission-card {
+  min-height: 320px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Correction pour les titres longs aussi */
+.job-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  max-height: 2.8em;
+}
+
+/* Correction pour les noms d'entreprise longs */
+.job-company {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
   
   .job-card {
     break-inside: avoid;
