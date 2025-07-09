@@ -100,7 +100,7 @@ function JobBoardContent() {
     }
     
     try {
-      const data = await jobService.fetchJobs();
+      const jobsData = await fetchJobsHome();
       setJobs(data);
       setFilteredJobs(data);
     } catch (error) {
@@ -799,12 +799,23 @@ function JobBoardContent() {
   );
 }
 
+// Wrapper pour passer les props à MissionsPage
+function MissionsPageWrapper() {
+  // Ce composant récupérera les props nécessaires depuis le contexte
+  return <MissionsPage />;
+}
+
 // Wrapper principal avec AuthProvider
 export default function App() {
   return (
-    <AuthProvider>
-      <JobBoardContent />
-    </AuthProvider>
+    <Router>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<JobBoardContent />} />
+          <Route path="/missions" element={<MissionsPageWrapper />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
   );
 }
 
