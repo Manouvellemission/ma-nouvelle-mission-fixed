@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { jobService } from './services/jobService';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+import SkeletonLoader from './components/ui/SkeletonLoader';
 import './App.css';
 
 // Validation des données
@@ -79,16 +81,20 @@ function JobBoardContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     type: 'all',
     location: 'all',
     salary: 'all'
   });
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   
-  // Charger les jobs
-  const fetchJobs = async () => {
-    setLoading(true);
+  // Charger les jobs avec gestion améliorée du loading
+  const fetchJobs = async (showDataLoading = false) => {
+    if (showDataLoading) {
+      setDataLoading(true);
+    }
+    
     try {
       const data = await jobService.fetchJobs();
       setJobs(data);
@@ -99,7 +105,8 @@ function JobBoardContent() {
       setJobs([]);
       setFilteredJobs([]);
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -274,6 +281,16 @@ function JobBoardContent() {
   const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
   const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
 
+  // Afficher le loading spinner initial
+  if (initialLoading) {
+    return (
+      <LoadingSpinner 
+        message="Chargement de vos missions..." 
+        showDetails={true}
+      />
+    );
+  }
+
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Notification Supabase si non configuré */}
@@ -311,13 +328,14 @@ function JobBoardContent() {
               <a href="#about" className="hover:text-blue-600 transition">À propos</a>
               <a href="#contact" className="hover:text-blue-600 transition">Contact</a>
               
-              <button
-                onClick={fetchJobs}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
-                title="Rafraîchir les annonces"
-              >
-                <RefreshCw className="w-5 h-5" />
-              </button>
+                  <button
+                    onClick={() => fetchJobs(true)}
+                    disabled={dataLoading}
+                    className="p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                    title="Rafraîchir les annonces"
+                  >
+                    <RefreshCw className={`w-5 h-5 ${dataLoading ? 'animate-spin' : ''}`} />
+                  </button>
               
               {isAdmin && isSupabaseConfigured && (
                 <button
@@ -520,11 +538,8 @@ function JobBoardContent() {
           Nouvelles missions disponibles
         </h2>
         
-        {loading ? (
-          <div className="text-center py-12">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-blue-600" />
-            <p className="mt-4 text-gray-600">Chargement des annonces...</p>
-          </div>
+        {dataLoading ? (
+          <SkeletonLoader count={6} />
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredJobs.map(job => (
@@ -617,7 +632,7 @@ function JobBoardContent() {
           </div>
         )}
         
-        {!loading && filteredJobs.length === 0 && (
+        {!dataLoading && filteredJobs.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-600 text-lg">Aucune mission ne correspond à votre recherche.</p>
           </div>
@@ -1219,4 +1234,3 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
     </div>
   );
 }
-
