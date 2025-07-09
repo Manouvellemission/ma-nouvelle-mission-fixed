@@ -1,6 +1,6 @@
-// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION AMÉLIORÉE)
+// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION AVEC GESTION DE SESSION)
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { jobService } from './services/jobService';
 import LoadingSpinner from './components/ui/LoadingSpinner';
@@ -73,7 +73,7 @@ const sanitizeJobData = (jobData) => {
 
 // Composant principal avec Auth
 function JobBoardContent() {
-  const { isAdmin, signOut, isSupabaseConfigured } = useAuth();
+  const { isAdmin, signOut, isSupabaseConfigured, executeWithValidSession, sessionExpired, clearSessionExpired } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -155,6 +155,19 @@ function JobBoardContent() {
     }
   }, [submitMessage]);
 
+  // ✅ GESTION DE LA SESSION EXPIRÉE
+  useEffect(() => {
+    if (sessionExpired) {
+      setSubmitMessage({
+        type: 'error',
+        text: '🔒 Session expirée. Veuillez vous reconnecter pour continuer.'
+      });
+      // Fermer les modales ouvertes
+      setShowJobForm(false);
+      setEditingJob(null);
+    }
+  }, [sessionExpired]);
+
   // Filtrage
   useEffect(() => {
     let filtered = [...jobs];
@@ -204,7 +217,7 @@ function JobBoardContent() {
       .replace(/^-|-$/g, '');
   };
 
-  // ✅ FONCTION AMÉLIORÉE AVEC FEEDBACK UTILISATEUR
+  // ✅ FONCTION AMÉLIORÉE AVEC GESTION DE SESSION
   const handleJobSubmit = async () => {
     // Réinitialiser les messages
     setSubmitMessage(null);
@@ -239,19 +252,22 @@ function JobBoardContent() {
       // Sanitiser les données
       const sanitizedData = sanitizeJobData(jobData);
 
-      if (editingJob) {
-        await jobService.updateJob(editingJob.id, sanitizedData);
-        setSubmitMessage({
-          type: 'success',
-          text: '✅ Mission mise à jour avec succès !'
-        });
-      } else {
-        await jobService.createJob(sanitizedData);
-        setSubmitMessage({
-          type: 'success',
-          text: '✅ Mission créée avec succès !'
-        });
-      }
+      // ✅ UTILISER executeWithValidSession POUR GÉRER LA SESSION
+      await executeWithValidSession(async () => {
+        if (editingJob) {
+          await jobService.updateJob(editingJob.id, sanitizedData);
+          setSubmitMessage({
+            type: 'success',
+            text: '✅ Mission mise à jour avec succès !'
+          });
+        } else {
+          await jobService.createJob(sanitizedData);
+          setSubmitMessage({
+            type: 'success',
+            text: '✅ Mission créée avec succès !'
+          });
+        }
+      });
       
       await fetchJobs();
       
@@ -277,16 +293,30 @@ function JobBoardContent() {
       
     } catch (error) {
       console.error('Erreur:', error);
-      setSubmitMessage({
-        type: 'error',
-        text: '❌ ' + (error.message || 'Une erreur est survenue lors de la sauvegarde.')
-      });
+      
+      // ✅ GESTION SPÉCIFIQUE DES ERREURS DE SESSION
+      if (error.message?.includes('Session expirée') || error.message?.includes('JWT')) {
+        setSubmitMessage({
+          type: 'error',
+          text: '🔒 Session expirée. Veuillez vous reconnecter pour continuer.'
+        });
+        // Fermer la modal et réinitialiser
+        setTimeout(() => {
+          setShowJobForm(false);
+          setEditingJob(null);
+        }, 3000);
+      } else {
+        setSubmitMessage({
+          type: 'error',
+          text: '❌ ' + (error.message || 'Une erreur est survenue lors de la sauvegarde.')
+        });
+      }
     } finally {
       setIsSubmittingJob(false);
     }
   };
   
-  // ✅ FONCTION AMÉLIORÉE AVEC FEEDBACK UTILISATEUR
+  // ✅ FONCTION AMÉLIORÉE AVEC GESTION DE SESSION
   const deleteJob = async (id) => {
     // Confirmation avec message plus clair
     const job = jobs.find(j => j.id === id);
@@ -300,7 +330,11 @@ function JobBoardContent() {
     setSubmitMessage(null);
 
     try {
-      await jobService.deleteJob(id);
+      // ✅ UTILISER executeWithValidSession POUR GÉRER LA SESSION
+      await executeWithValidSession(async () => {
+        await jobService.deleteJob(id);
+      });
+      
       setSubmitMessage({
         type: 'success',
         text: '✅ Mission supprimée avec succès !'
@@ -309,10 +343,19 @@ function JobBoardContent() {
       if (selectedJob?.id === id) setSelectedJob(null);
     } catch (error) {
       console.error('Erreur:', error);
-      setSubmitMessage({
-        type: 'error',
-        text: '❌ ' + (error.message || 'Erreur lors de la suppression')
-      });
+      
+      // ✅ GESTION SPÉCIFIQUE DES ERREURS DE SESSION
+      if (error.message?.includes('Session expirée') || error.message?.includes('JWT')) {
+        setSubmitMessage({
+          type: 'error',
+          text: '🔒 Session expirée. Veuillez vous reconnecter pour continuer.'
+        });
+      } else {
+        setSubmitMessage({
+          type: 'error',
+          text: '❌ ' + (error.message || 'Erreur lors de la suppression')
+        });
+      }
     } finally {
       setIsDeletingJob(null);
     }
@@ -338,7 +381,15 @@ function JobBoardContent() {
         type: 'success',
         text: '✅ Déconnexion réussie'
       });
+      clearSessionExpired(); // Réinitialiser l'état de session expirée
     }
+  };
+
+  // ✅ FONCTION POUR GÉRER LA RECONNEXION APRÈS SESSION EXPIRÉE
+  const handleReconnect = () => {
+    clearSessionExpired();
+    setSubmitMessage(null);
+    setShowAdminLogin(true);
   };
 
   const bgColor = darkMode ? 'bg-gray-900' : 'bg-white';
@@ -369,9 +420,42 @@ function JobBoardContent() {
             {submitMessage.type === 'success' ? (
               <CheckCircle className="w-5 h-5" />
             ) : (
-              <X className="w-5 h-5" />
+              <AlertTriangle className="w-5 h-5" />
             )}
             <span className="font-medium whitespace-pre-line">{submitMessage.text}</span>
+            {/* ✅ BOUTON DE RECONNEXION SI SESSION EXPIRÉE */}
+            {submitMessage.text.includes('Session expirée') && (
+              <button
+                onClick={handleReconnect}
+                className="ml-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+              >
+                Se reconnecter
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ✅ ALERTE DE SESSION EXPIRÉE */}
+      {sessionExpired && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-sm">
+                <strong>Session expirée :</strong> Votre session d'administration a expiré. Veuillez vous reconnecter pour continuer à gérer les missions.
+              </p>
+            </div>
+            <div className="ml-3">
+              <button
+                onClick={handleReconnect}
+                className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
+              >
+                Se reconnecter
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -422,7 +506,7 @@ function JobBoardContent() {
                     <RefreshCw className={`w-5 h-5 ${dataLoading ? 'animate-spin' : ''}`} />
                   </button>
               
-              {isAdmin && isSupabaseConfigured && (
+              {isAdmin && isSupabaseConfigured && !sessionExpired && (
                 <button
                   onClick={() => setShowJobForm(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -474,7 +558,7 @@ function JobBoardContent() {
                 <RefreshCw className="w-5 h-5" />
                 Rafraîchir
               </button>
-              {isAdmin && isSupabaseConfigured && (
+              {isAdmin && isSupabaseConfigured && !sessionExpired && (
                 <button
                   onClick={() => {
                     setShowJobForm(true);
@@ -647,7 +731,7 @@ function JobBoardContent() {
                     <h3 className={`job-title text-xl font-semibold ${textColor}`}>{job.title}</h3>
                     <p className={`job-company ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{job.company}</p>
                   </div>
-                  {isAdmin && isSupabaseConfigured && (
+                  {isAdmin && isSupabaseConfigured && !sessionExpired && (
                     <div className="flex gap-2">
                       <button
                         onClick={(e) => {
@@ -881,7 +965,7 @@ function JobBoardContent() {
       )}
 
       {/* Job Form Modal */}
-      {showJobForm && isSupabaseConfigured && (
+      {showJobForm && isSupabaseConfigured && !sessionExpired && (
         <JobFormModal
           jobForm={jobForm}
           setJobForm={setJobForm}
@@ -1206,7 +1290,7 @@ function AdminLoginModal({ onClose, darkMode }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useAuth();
+  const { signIn, clearSessionExpired } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1219,6 +1303,7 @@ function AdminLoginModal({ onClose, darkMode }) {
       setError(error.message);
       setLoading(false);
     } else {
+      clearSessionExpired(); // ✅ Réinitialiser l'état de session expirée
       onClose();
     }
   };
@@ -1318,7 +1403,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
                 {submitMessage.type === 'success' ? (
                   <CheckCircle className="w-5 h-5" />
                 ) : (
-                  <X className="w-5 h-5" />
+                  <AlertTriangle className="w-5 h-5" />
                 )}
                 <span className="font-medium whitespace-pre-line">{submitMessage.text}</span>
               </div>
@@ -1440,3 +1525,4 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
     </div>
   );
 }
+
