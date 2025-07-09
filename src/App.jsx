@@ -6,10 +6,9 @@ import { jobService } from './services/jobService';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import SkeletonLoader from './components/ui/SkeletonLoader';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import MissionsPage from './components/ui/MissionsPage';
 import { fetchJobsHome } from './services/jobService';
-
 
 // Validation des données
 const validateJobData = (jobData) => {
@@ -93,16 +92,16 @@ function JobBoardContent() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   
-  // Charger les jobs avec gestion améliorée du loading
+  // Charger les jobs avec gestion améliorée du loading (CORRIGÉ)
   const fetchJobs = async (showDataLoading = false) => {
     if (showDataLoading) {
       setDataLoading(true);
     }
     
     try {
-      const jobsData = await fetchJobsHome();
-      setJobs(data);
-      setFilteredJobs(data);
+      const jobsData = await fetchJobsHome(); // Limite à 6 missions pour l'accueil
+      setJobs(jobsData); // CORRIGÉ : utiliser jobsData au lieu de data
+      setFilteredJobs(jobsData); // CORRIGÉ : utiliser jobsData au lieu de data
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
       // Utiliser des données de fallback si erreur
@@ -499,7 +498,7 @@ function JobBoardContent() {
             )}
             
             <p className="text-center text-gray-600 mt-6">
-              <span className="font-bold text-blue-600">{filteredJobs.length}</span> mission{filteredJobs.length > 1 ? 's' : ''} disponible{filteredJobs.length > 1 ? 's' : ''}
+              <span className="font-bold text-blue-600">{filteredJobs.length}</span> mission{filteredJobs.length > 1 ? 's' : ''} à la une
             </p>
           </div>
         </div>
@@ -539,7 +538,7 @@ function JobBoardContent() {
       {/* Jobs List */}
       <main className="container mx-auto px-4 py-12" id="jobs">
         <h2 className={`text-3xl font-bold text-center mb-12 ${textColor}`}>
-          Nouvelles missions disponibles
+          Missions à la une
         </h2>
         
         {dataLoading ? (
@@ -641,6 +640,17 @@ function JobBoardContent() {
             <p className="text-gray-600 text-lg">Aucune mission ne correspond à votre recherche.</p>
           </div>
         )}
+
+        {/* Bouton Voir toutes les missions - CORRIGÉ */}
+        <div className="text-center mt-12">
+          <Link 
+            to="/missions"
+            className="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors text-lg"
+          >
+            Voir toutes les missions
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Link>
+        </div>
       </main>
 
       {/* SEO Section */}
@@ -799,10 +809,38 @@ function JobBoardContent() {
   );
 }
 
-// Wrapper pour passer les props à MissionsPage
+// Wrapper pour passer les props à MissionsPage - CORRIGÉ
 function MissionsPageWrapper() {
-  // Ce composant récupérera les props nécessaires depuis le contexte
-  return <MissionsPage />;
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [applicationData, setApplicationData] = useState({
+    name: '',
+    email: '',
+    message: '',
+    cv: null
+  });
+  const [darkMode, setDarkMode] = useState(false);
+
+  const handleJobApplication = async (jobId, formData) => {
+    // Logique de candidature (copiée de JobBoardContent si nécessaire)
+    console.log('Candidature pour:', jobId, formData);
+  };
+
+  return (
+    <MissionsPage 
+      selectedJob={selectedJob}
+      setSelectedJob={setSelectedJob}
+      showJobModal={showJobModal}
+      setShowJobModal={setShowJobModal}
+      showApplicationModal={showApplicationModal}
+      setShowApplicationModal={setShowApplicationModal}
+      applicationData={applicationData}
+      setApplicationData={setApplicationData}
+      handleJobApplication={handleJobApplication}
+      darkMode={darkMode}
+    />
+  );
 }
 
 // Wrapper principal avec AuthProvider
@@ -1249,3 +1287,4 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
     </div>
   );
 }
+
