@@ -552,7 +552,7 @@ function JobBoardContent() {
             {filteredJobs.map(job => (
               <article 
                 key={job.id}
-                className={`${cardBg} rounded-lg shadow-lg hover:shadow-xl transition-shadow p-6 cursor-pointer`}
+                className={`mission-card ${cardBg} rounded-lg shadow-lg hover:shadow-xl transition-shadow p-6 cursor-pointer`}
                 onClick={() => setSelectedJob(job)}
               >
                 {job.featured && (
@@ -564,8 +564,8 @@ function JobBoardContent() {
                 
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className={`text-xl font-semibold ${textColor}`}>{job.title}</h3>
-                    <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{job.company}</p>
+                    <h3 className={`job-title text-xl font-semibold ${textColor}`}>{job.title}</h3>
+                    <p className={`job-company ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{job.company}</p>
                   </div>
                   {isAdmin && isSupabaseConfigured && (
                     <div className="flex gap-2">
@@ -619,8 +619,8 @@ function JobBoardContent() {
                   </span>
                 </div>
                 
-                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4`}>
-                  {job.description.substring(0, 150)}...
+                <p className={`job-description ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4`}>
+                {job.description}
                 </p>
                 
                 <div className="flex justify-between items-center">
