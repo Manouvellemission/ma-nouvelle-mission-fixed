@@ -15,4 +15,8 @@ export default defineConfig({
     host: '0.0.0.0', // Permet l'accès depuis n'importe quel host
     port: 5177,
   },
+  preview: {
+    host: '0.0.0.0', // Permet l'accès depuis n'importe quel host
+    port: 4173,
+  },
 })
