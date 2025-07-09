@@ -1,6 +1,6 @@
-// src/App.jsx - Application principale Ma Nouvelle Mission
+// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION AMÉLIORÉE)
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw } from 'lucide-react';
+import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { jobService } from './services/jobService';
 import LoadingSpinner from './components/ui/LoadingSpinner';
@@ -92,6 +92,11 @@ function JobBoardContent() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
   
+  // ✅ NOUVEAUX ÉTATS POUR LE FEEDBACK UTILISATEUR
+  const [isSubmittingJob, setIsSubmittingJob] = useState(false);
+  const [isDeletingJob, setIsDeletingJob] = useState(null); // ID du job en cours de suppression
+  const [submitMessage, setSubmitMessage] = useState(null); // {type: 'success'|'error', text: '...'}
+  
   // Charger les jobs avec gestion améliorée du loading (CORRIGÉ)
   const fetchJobs = async (showDataLoading = false) => {
     if (showDataLoading) {
@@ -139,6 +144,16 @@ function JobBoardContent() {
   useEffect(() => {
     localStorage.setItem('darkMode', darkMode);
   }, [darkMode]);
+
+  // ✅ EFFET POUR MASQUER LES MESSAGES APRÈS 5 SECONDES
+  useEffect(() => {
+    if (submitMessage) {
+      const timer = setTimeout(() => {
+        setSubmitMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitMessage]);
 
   // Filtrage
   useEffect(() => {
@@ -189,42 +204,58 @@ function JobBoardContent() {
       .replace(/^-|-$/g, '');
   };
 
+  // ✅ FONCTION AMÉLIORÉE AVEC FEEDBACK UTILISATEUR
   const handleJobSubmit = async () => {
-    const jobData = {
-      title: jobForm.title,
-      company: jobForm.company,
-      location: jobForm.location,
-      type: jobForm.type,
-      salary: jobForm.salary,
-      salary_type: jobForm.type === 'CDI' || jobForm.type === 'CDD' ? 'Annuel' : 'TJM',
-      description: jobForm.description,
-      requirements: jobForm.requirements.split('\n').filter(r => r.trim()),
-      benefits: jobForm.benefits.split('\n').filter(b => b.trim()),
-      slug: generateSlug(jobForm.title, jobForm.location),
-      featured: jobForm.featured,
-      posted_date: new Date().toISOString().split('T')[0]
-    };
-
-    // Valider les données
-    const errors = validateJobData(jobData);
-    if (Object.keys(errors).length > 0) {
-      alert('Erreurs de validation:\n' + Object.values(errors).join('\n'));
-      return;
-    }
-
-    // Sanitiser les données
-    const sanitizedData = sanitizeJobData(jobData);
+    // Réinitialiser les messages
+    setSubmitMessage(null);
+    setIsSubmittingJob(true);
 
     try {
+      const jobData = {
+        title: jobForm.title,
+        company: jobForm.company,
+        location: jobForm.location,
+        type: jobForm.type,
+        salary: jobForm.salary,
+        salary_type: jobForm.type === 'CDI' || jobForm.type === 'CDD' ? 'Annuel' : 'TJM',
+        description: jobForm.description,
+        requirements: jobForm.requirements.split('\n').filter(r => r.trim()),
+        benefits: jobForm.benefits.split('\n').filter(b => b.trim()),
+        slug: generateSlug(jobForm.title, jobForm.location),
+        featured: jobForm.featured,
+        posted_date: new Date().toISOString().split('T')[0]
+      };
+
+      // Valider les données
+      const errors = validateJobData(jobData);
+      if (Object.keys(errors).length > 0) {
+        setSubmitMessage({
+          type: 'error',
+          text: 'Erreurs de validation:\n' + Object.values(errors).join('\n')
+        });
+        return;
+      }
+
+      // Sanitiser les données
+      const sanitizedData = sanitizeJobData(jobData);
+
       if (editingJob) {
         await jobService.updateJob(editingJob.id, sanitizedData);
-        alert('Annonce mise à jour avec succès !');
+        setSubmitMessage({
+          type: 'success',
+          text: '✅ Mission mise à jour avec succès !'
+        });
       } else {
         await jobService.createJob(sanitizedData);
-        alert('Annonce ajoutée avec succès !');
+        setSubmitMessage({
+          type: 'success',
+          text: '✅ Mission créée avec succès !'
+        });
       }
       
       await fetchJobs();
+      
+      // Réinitialiser le formulaire après succès
       setJobForm({
         title: '',
         company: '',
@@ -238,24 +269,52 @@ function JobBoardContent() {
         featured: false
       });
       setEditingJob(null);
-      setShowJobForm(false);
+      
+      // Fermer la modal après 2 secondes
+      setTimeout(() => {
+        setShowJobForm(false);
+      }, 2000);
+      
     } catch (error) {
       console.error('Erreur:', error);
-      alert(error.message || 'Une erreur est survenue.');
+      setSubmitMessage({
+        type: 'error',
+        text: '❌ ' + (error.message || 'Une erreur est survenue lors de la sauvegarde.')
+      });
+    } finally {
+      setIsSubmittingJob(false);
     }
   };
   
+  // ✅ FONCTION AMÉLIORÉE AVEC FEEDBACK UTILISATEUR
   const deleteJob = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette offre ?')) {
-      try {
-        await jobService.deleteJob(id);
-        alert('Annonce supprimée avec succès !');
-        await fetchJobs();
-        if (selectedJob?.id === id) setSelectedJob(null);
-      } catch (error) {
-        console.error('Erreur:', error);
-        alert(error.message || 'Erreur lors de la suppression');
-      }
+    // Confirmation avec message plus clair
+    const job = jobs.find(j => j.id === id);
+    const confirmMessage = `Êtes-vous sûr de vouloir supprimer définitivement la mission "${job?.title}" ?\n\nCette action est irréversible.`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsDeletingJob(id);
+    setSubmitMessage(null);
+
+    try {
+      await jobService.deleteJob(id);
+      setSubmitMessage({
+        type: 'success',
+        text: '✅ Mission supprimée avec succès !'
+      });
+      await fetchJobs();
+      if (selectedJob?.id === id) setSelectedJob(null);
+    } catch (error) {
+      console.error('Erreur:', error);
+      setSubmitMessage({
+        type: 'error',
+        text: '❌ ' + (error.message || 'Erreur lors de la suppression')
+      });
+    } finally {
+      setIsDeletingJob(null);
     }
   };
 
@@ -275,7 +334,10 @@ function JobBoardContent() {
   const handleAdminLogout = async () => {
     const { error } = await signOut();
     if (!error) {
-      alert('Déconnexion réussie');
+      setSubmitMessage({
+        type: 'success',
+        text: '✅ Déconnexion réussie'
+      });
     }
   };
 
@@ -296,6 +358,24 @@ function JobBoardContent() {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      {/* ✅ NOTIFICATION DE FEEDBACK UTILISATEUR */}
+      {submitMessage && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${
+          submitMessage.type === 'success' 
+            ? 'bg-green-100 text-green-800 border border-green-200' 
+            : 'bg-red-100 text-red-800 border border-red-200'
+        }`}>
+          <div className="flex items-center gap-2">
+            {submitMessage.type === 'success' ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <X className="w-5 h-5" />
+            )}
+            <span className="font-medium whitespace-pre-line">{submitMessage.text}</span>
+          </div>
+        </div>
+      )}
+
       {/* Notification Supabase si non configuré */}
       {!isSupabaseConfigured && (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">
@@ -588,6 +668,7 @@ function JobBoardContent() {
                           setShowJobForm(true);
                         }}
                         className="text-blue-600 hover:bg-blue-50 p-2 rounded"
+                        title="Modifier cette mission"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
@@ -596,9 +677,15 @@ function JobBoardContent() {
                           e.stopPropagation();
                           deleteJob(job.id);
                         }}
-                        className="text-red-600 hover:bg-red-50 p-2 rounded"
+                        disabled={isDeletingJob === job.id}
+                        className="text-red-600 hover:bg-red-50 p-2 rounded disabled:opacity-50"
+                        title="Supprimer cette mission"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        {isDeletingJob === job.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   )}
@@ -814,9 +901,12 @@ function JobBoardContent() {
               benefits: '',
               featured: false
             });
+            setSubmitMessage(null); // ✅ Réinitialiser les messages
           }}
           isEditing={!!editingJob}
           darkMode={darkMode}
+          isSubmitting={isSubmittingJob} // ✅ Passer l'état de soumission
+          submitMessage={submitMessage} // ✅ Passer les messages
         />
       )}
     </div>
@@ -1092,9 +1182,16 @@ function JobModal({ job, onClose, darkMode, onApplication }) {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isSubmitting ? 'Envoi en cours...' : 'Envoyer ma candidature'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                'Envoyer ma candidature'
+              )}
             </button>
           </div>
         </div>
@@ -1160,9 +1257,16 @@ function AdminLoginModal({ onClose, darkMode }) {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'Connexion...' : 'Se connecter'}
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Connexion...
+                </>
+              ) : (
+                'Se connecter'
+              )}
             </button>
             <button
               type="button"
@@ -1178,8 +1282,8 @@ function AdminLoginModal({ onClose, darkMode }) {
   );
 }
 
-// Composant Modal Job Form
-function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkMode }) {
+// ✅ COMPOSANT MODAL JOB FORM AMÉLIORÉ
+function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkMode, isSubmitting, submitMessage }) {
   const handleTypeChange = (type) => {
     const newSalaryType = (type === 'CDI' || type === 'CDD') ? 'Annuel' : 'TJM';
     setJobForm({
@@ -1203,12 +1307,31 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
         </div>
         
         <div className="p-6 space-y-4">
+          {/* ✅ AFFICHAGE DES MESSAGES DE FEEDBACK */}
+          {submitMessage && (
+            <div className={`p-4 rounded-lg ${
+              submitMessage.type === 'success' 
+                ? 'bg-green-100 text-green-800 border border-green-200' 
+                : 'bg-red-100 text-red-800 border border-red-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                {submitMessage.type === 'success' ? (
+                  <CheckCircle className="w-5 h-5" />
+                ) : (
+                  <X className="w-5 h-5" />
+                )}
+                <span className="font-medium whitespace-pre-line">{submitMessage.text}</span>
+              </div>
+            </div>
+          )}
+
           <input
             type="text"
             placeholder="Titre du poste"
             value={jobForm.title}
             onChange={(e) => setJobForm({...jobForm, title: e.target.value})}
             className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+            disabled={isSubmitting}
           />
           
           <div className="grid md:grid-cols-2 gap-4">
@@ -1218,6 +1341,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
               value={jobForm.company}
               onChange={(e) => setJobForm({...jobForm, company: e.target.value})}
               className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+              disabled={isSubmitting}
             />
             <input
               type="text"
@@ -1225,6 +1349,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
               value={jobForm.location}
               onChange={(e) => setJobForm({...jobForm, location: e.target.value})}
               className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+              disabled={isSubmitting}
             />
           </div>
           
@@ -1233,6 +1358,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
               value={jobForm.type}
               onChange={(e) => handleTypeChange(e.target.value)}
               className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+              disabled={isSubmitting}
             >
               <option value="Mission">Mission</option>
               <option value="CDI">CDI</option>
@@ -1243,6 +1369,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
               value={jobForm.salary}
               onChange={(e) => setJobForm({...jobForm, salary: e.target.value})}
               className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+              disabled={isSubmitting}
             />
           </div>
           
@@ -1259,6 +1386,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
             value={jobForm.description}
             onChange={(e) => setJobForm({...jobForm, description: e.target.value})}
             className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+            disabled={isSubmitting}
           />
           
           <textarea
@@ -1267,6 +1395,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
             value={jobForm.requirements}
             onChange={(e) => setJobForm({...jobForm, requirements: e.target.value})}
             className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+            disabled={isSubmitting}
           />
           
           <textarea
@@ -1275,6 +1404,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
             value={jobForm.benefits}
             onChange={(e) => setJobForm({...jobForm, benefits: e.target.value})}
             className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+            disabled={isSubmitting}
           />
           
           <div className="flex items-center">
@@ -1284,6 +1414,7 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
               checked={jobForm.featured}
               onChange={(e) => setJobForm({...jobForm, featured: e.target.checked})}
               className="mr-2"
+              disabled={isSubmitting}
             />
             <label htmlFor="featured" className={darkMode ? 'text-gray-300' : 'text-gray-700'}>
               Mettre en avant cette offre
@@ -1292,13 +1423,20 @@ function JobFormModal({ jobForm, setJobForm, onSubmit, onClose, isEditing, darkM
           
           <button
             onClick={onSubmit}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isEditing ? 'Mettre à jour' : 'Publier la mission'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {isEditing ? 'Mise à jour...' : 'Publication...'}
+              </>
+            ) : (
+              isEditing ? 'Mettre à jour' : 'Publier la mission'
+            )}
           </button>
         </div>
       </div>
     </div>
   );
 }
-
