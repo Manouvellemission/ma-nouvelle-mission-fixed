@@ -1,6 +1,7 @@
 // src/components/ui/MissionsPage.jsx
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Briefcase, Building, Euro, Filter } from 'lucide-react';
+import { Search, MapPin, Briefcase, Building, Euro, Filter, Sparkles, Users, ArrowLeft, CheckCircle, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { fetchJobsPaginated } from '../../services/jobService';
 import { useAuth } from '../../contexts/AuthContext';
 import SkeletonLoader from './SkeletonLoader';
@@ -13,18 +14,7 @@ import {
   PaginationPrevious,
 } from './pagination';
 
-const MissionsPage = ({ 
-  selectedJob, 
-  setSelectedJob, 
-  showJobModal, 
-  setShowJobModal,
-  showApplicationModal,
-  setShowApplicationModal,
-  applicationData,
-  setApplicationData,
-  handleJobApplication,
-  darkMode 
-}) => {
+const MissionsPage = ({ darkMode }) => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +26,7 @@ const MissionsPage = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   const { user } = useAuth();
 
@@ -78,18 +69,30 @@ const MissionsPage = ({
 
   const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
   const textColor = darkMode ? 'text-white' : 'text-gray-900';
+  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
 
   return (
     <div className={`min-h-screen ${bgColor} ${textColor}`}>
       {/* Header avec recherche */}
       <div className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Bouton retour */}
+          <div className="mb-6">
+            <Link 
+              to="/"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Retour à l'accueil
+            </Link>
+          </div>
+
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Toutes les missions
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-300">
-              {totalCount} missions disponibles
+              {totalCount} mission{totalCount > 1 ? 's' : ''} disponible{totalCount > 1 ? 's' : ''}
             </p>
           </div>
 
@@ -113,6 +116,7 @@ const MissionsPage = ({
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Tous les types</option>
+              <option value="Mission">Mission</option>
               <option value="CDI">CDI</option>
               <option value="CDD">CDD</option>
               <option value="Freelance">Freelance</option>
@@ -138,17 +142,15 @@ const MissionsPage = ({
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {filteredJobs.map(job => (
-                <div key={job.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer"
-                     onClick={() => {
-                       setSelectedJob(job);
-                       setShowJobModal(true);
-                     }}>
+                <div key={job.id} className={`${cardBg} rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer`}
+                     onClick={() => setSelectedJob(job)}>
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white line-clamp-2">
                       {job.title}
                     </h3>
                     {job.featured && (
-                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                      <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full flex items-center">
+                        <Sparkles className="w-3 h-3 mr-1" />
                         Vedette
                       </span>
                     )}
@@ -170,26 +172,45 @@ const MissionsPage = ({
                     {job.salary && (
                       <div className="flex items-center text-gray-600 dark:text-gray-300">
                         <Euro className="h-4 w-4 mr-2" />
-                        <span>{job.salary}</span>
+                        <span>{job.salary_type === 'TJM' ? `${job.salary}€/jour` : `${job.salary}€/an`}</span>
                       </div>
                     )}
                   </div>
 
                   <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
-                    {job.description}
+                    {job.description.substring(0, 150)}...
                   </p>
 
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-500">
-                      {new Date(job.created_at).toLocaleDateString('fr-FR')}
+                      {new Date(job.created_at || job.posted_date).toLocaleDateString('fr-FR')}
                     </span>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                      Voir détails
-                    </button>
+                    {job.applicants > 0 && (
+                      <span className="text-sm text-gray-600 flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        {job.applicants} candidat{job.applicants > 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Message si aucun résultat */}
+            {filteredJobs.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <p className="text-gray-600 text-lg">Aucune mission ne correspond à votre recherche.</p>
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilters({ type: '', location: '', salary: '' });
+                  }}
+                  className="mt-4 text-blue-600 hover:text-blue-700"
+                >
+                  Réinitialiser les filtres
+                </button>
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -202,7 +223,7 @@ const MissionsPage = ({
                     />
                   </PaginationItem>
                   
-                  {[...Array(totalPages)].map((_, index) => {
+                  {[...Array(Math.min(totalPages, 10))].map((_, index) => {
                     const page = index + 1;
                     return (
                       <PaginationItem key={page}>
@@ -229,8 +250,248 @@ const MissionsPage = ({
           </>
         )}
       </div>
+
+      {/* Modal Job Details */}
+      {selectedJob && (
+        <JobModal 
+          job={selectedJob} 
+          onClose={() => setSelectedJob(null)} 
+          darkMode={darkMode}
+        />
+      )}
     </div>
   );
 };
 
+// Composant Modal Job Details (simplifié pour MissionsPage)
+function JobModal({ job, onClose, darkMode }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: '',
+    cvFile: null
+  });
+
+  const validateEmail = (email) => {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
+
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.name || formData.name.trim().length < 2) {
+      alert('Veuillez entrer votre nom complet');
+      return;
+    }
+    
+    if (!validateEmail(formData.email)) {
+      alert('Veuillez entrer une adresse email valide');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Créer FormData pour Netlify
+      const netlifyData = new FormData();
+      
+      netlifyData.append('form-name', 'job-application');
+      netlifyData.append('name', formData.name);
+      netlifyData.append('email', formData.email);
+      netlifyData.append('message', formData.message || 'Pas de message');
+      netlifyData.append('jobTitle', job.title);
+      netlifyData.append('company', job.company);
+      netlifyData.append('location', job.location);
+      
+      if (formData.cvFile) {
+        if (formData.cvFile.size > 10 * 1024 * 1024) {
+          alert('Le fichier est trop volumineux. Maximum 10MB.');
+          setIsSubmitting(false);
+          return;
+        }
+        netlifyData.append('cv', formData.cvFile);
+      }
+
+      const response = await fetch('/', {
+        method: 'POST',
+        body: netlifyData
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setTimeout(() => {
+          onClose();
+        }, 3000);
+      } else {
+        setSubmitStatus('error');
+        alert('Erreur lors de l\'envoi. Veuillez réessayer.');
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      setSubmitStatus('error');
+      alert('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (submitStatus === 'success') {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-8 max-w-md text-center`}>
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Candidature envoyée !
+          </h2>
+          <p className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
+            Merci pour votre candidature. Nous reviendrons vers vous rapidement.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto`}>
+        <div className={`sticky top-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-6 flex justify-between items-center`}>
+          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            {job.title}
+          </h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <div className="p-6">
+          <div className="mb-6">
+            <p className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-2`}>{job.company}</p>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                {job.location}
+              </span>
+              <span className="flex items-center gap-1">
+                <Briefcase className="w-4 h-4" />
+                {job.type}
+              </span>
+              <span className="flex items-center gap-1">
+                <Euro className="w-4 h-4" />
+                {job.salary_type === 'TJM' ? `${job.salary}€/jour` : `${job.salary}€/an`}
+              </span>
+              {job.applicants > 0 && (
+                <span className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  {job.applicants} candidat{job.applicants > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                Description
+              </h3>
+              <p className={`whitespace-pre-line ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{job.description}</p>
+            </div>
+
+            {job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0 && (
+              <div>
+                <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Compétences requises
+                </h3>
+                <ul className="space-y-2">
+                  {job.requirements.map((req, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                      <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{req}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {job.benefits && Array.isArray(job.benefits) && job.benefits.length > 0 && (
+              <div>
+                <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Avantages
+                </h3>
+                <ul className="space-y-2">
+                  {job.benefits.map((benefit, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <Sparkles className="w-5 h-5 text-purple-500 mt-0.5" />
+                      <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 space-y-4 border-t pt-8">
+            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              Postuler maintenant
+            </h3>
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                placeholder="Nom complet *"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className={`px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+              />
+              <input
+                type="email"
+                placeholder="Email *"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className={`px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+              />
+            </div>
+            
+            <textarea
+              placeholder="Message de motivation"
+              rows="4"
+              value={formData.message}
+              onChange={(e) => setFormData({...formData, message: e.target.value})}
+              className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+            />
+            
+            <div>
+              <label className={`block mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                CV (PDF - optionnel, max 10MB)
+              </label>
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => setFormData({...formData, cvFile: e.target.files[0]})}
+                className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-50'}`}
+              />
+            </div>
+
+            {submitStatus === 'error' && (
+              <div className="bg-red-100 text-red-700 p-3 rounded">
+                Une erreur s'est produite. Veuillez réessayer.
+              </div>
+            )}
+            
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Envoi en cours...' : 'Envoyer ma candidature'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default MissionsPage;
+
