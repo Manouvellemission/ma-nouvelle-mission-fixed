@@ -1,4 +1,4 @@
-// src/services/jobService.js - Service de gestion des emplois avec fallback
+/ src/services/jobService.js - Service de gestion des emplois avec fallback
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Données de fallback si Supabase n'est pas configuré
@@ -49,24 +49,24 @@ Vous collaborerez étroitement avec notre équipe de designers UX/UI et particip
     salary_type: "Annuel",
     description: `Rejoignez notre équipe de cybersécurité en tant qu'expert pour protéger nos infrastructures et celles de nos clients.
 
-Vous serez responsable de l'analyse des menaces, de la mise en place de solutions de sécurité, et de la formation des équipes aux bonnes pratiques.
+Vous serez responsable de l'analyse des vulnérabilités, de la mise en place de solutions de sécurité, et de la formation des équipes aux bonnes pratiques.
 
-Le poste implique également la réalisation d'audits de sécurité, la gestion des incidents, et la veille technologique sur les nouvelles menaces.`,
+Mission passionnante dans un secteur en pleine croissance avec des défis techniques stimulants.`,
     requirements: [
       "Master en cybersécurité ou équivalent",
-      "Certifications CISSP, CEH ou équivalent",
-      "Expérience avec les outils SIEM",
-      "Connaissance des frameworks de sécurité (ISO 27001, NIST)",
-      "Maîtrise des tests de pénétration",
-      "Anglais technique courant"
+      "Certifications CISSP, CEH ou similaires",
+      "Expérience en pentesting et audit de sécurité",
+      "Maîtrise des outils de sécurité (Nessus, Metasploit, etc.)",
+      "Connaissance des normes ISO 27001",
+      "Capacité à rédiger des rapports techniques"
     ],
     benefits: [
-      "CDI avec période d'essai de 3 mois",
-      "13ème mois + prime de performance",
-      "Formation certifiante prise en charge",
-      "Télétravail 2 jours/semaine",
-      "Participation aux conférences de sécurité",
-      "Plan d'épargne entreprise"
+      "Salaire attractif avec primes",
+      "Formation continue certifiante",
+      "Matériel de pointe fourni",
+      "Participation aux conférences sécurité",
+      "Télétravail possible",
+      "Mutuelle premium"
     ],
     posted_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     applicants: 8,
@@ -76,27 +76,26 @@ Le poste implique également la réalisation d'audits de sécurité, la gestion 
   {
     id: 3,
     title: "DevOps Engineer",
-    company: "CloudFirst",
+    company: "CloudTech Startup",
     location: "Marseille",
     type: "Mission",
-    salary: "700",
+    salary: "600",
     salary_type: "TJM",
-    description: `Mission de 6 mois pour accompagner la transformation DevOps d'une entreprise en pleine croissance.
+    description: `Nous cherchons un DevOps Engineer pour optimiser notre infrastructure cloud et automatiser nos processus de déploiement.
 
-Vous serez en charge de la mise en place d'une infrastructure cloud scalable, de l'automatisation des déploiements, et de l'amélioration des processus CI/CD.
+Vous travaillerez avec des technologies modernes comme Kubernetes, Docker, et Terraform pour créer une infrastructure scalable et robuste.
 
-Le projet inclut la migration vers AWS, la containerisation avec Docker/Kubernetes, et la mise en place de monitoring avancé.`,
+Environnement startup dynamique avec beaucoup d'autonomie et d'opportunités d'apprentissage.`,
     requirements: [
       "3+ années d'expérience DevOps",
-      "Maîtrise d'AWS ou Azure",
-      "Expérience avec Docker et Kubernetes",
+      "Maîtrise de Docker et Kubernetes",
+      "Expérience avec AWS/Azure/GCP",
       "Connaissance de Terraform et Ansible",
-      "Maîtrise des pipelines CI/CD (GitLab CI, Jenkins)",
-      "Scripting Bash/Python"
+      "Scripting Bash/Python",
+      "Expérience CI/CD (Jenkins, GitLab CI)"
     ],
     benefits: [
-      "Mission longue durée (6 mois renouvelable)",
-      "Équipe technique de haut niveau",
+      "Équipe jeune et dynamique",
       "Technologies de pointe",
       "Possibilité de télétravail",
       "Formation sur les nouvelles technologies cloud",
@@ -109,113 +108,144 @@ Le projet inclut la migration vers AWS, la containerisation avec Docker/Kubernet
   }
 ];
 
+// Cache pour les jobs
+let jobsCache = null;
+let cacheTimestamp = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export const jobService = {
+  // Récupérer toutes les missions avec cache et timeout
   async fetchJobs() {
-    if (!isSupabaseConfigured()) {
-      console.warn('jobService: Supabase non configuré - Utilisation des données de fallback');
+    // Vérifier le cache d'abord
+    if (jobsCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
+      console.log('Utilisation du cache pour les jobs');
+      return jobsCache;
+    }
+
+    if (!isSupabaseConfigured) {
+      console.warn('Supabase non configuré, utilisation des données de fallback');
+      jobsCache = FALLBACK_JOBS;
+      cacheTimestamp = Date.now();
       return FALLBACK_JOBS;
     }
 
     try {
-      const { data, error } = await supabase
+      // Timeout pour éviter les blocages
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 8000)
+      );
+
+      const supabasePromise = supabase
         .from('jobs')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
+      const { data, error } = await Promise.race([supabasePromise, timeoutPromise]);
+
       if (error) {
-        console.error('Erreur fetchJobs:', error);
-        return FALLBACK_JOBS;
+        console.error('Erreur Supabase:', error);
+        // Retourner le cache si disponible, sinon fallback
+        return jobsCache || FALLBACK_JOBS;
       }
+
+      // Mettre à jour le cache
+      jobsCache = data || FALLBACK_JOBS;
+      cacheTimestamp = Date.now();
       
-      return data || FALLBACK_JOBS;
+      return jobsCache;
     } catch (error) {
-      console.error('Erreur critique fetchJobs:', error);
-      return FALLBACK_JOBS;
+      console.error('Erreur lors de la récupération des jobs:', error);
+      // Retourner le cache si disponible, sinon fallback
+      return jobsCache || FALLBACK_JOBS;
     }
   },
 
+  // Invalider le cache
+  clearCache() {
+    jobsCache = null;
+    cacheTimestamp = null;
+  },
+
+  // Créer une nouvelle mission
   async createJob(jobData) {
     if (!isSupabaseConfigured()) {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('Vous devez être connecté pour créer une annonce');
-    }
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .insert([jobData])
+        .select();
 
-    const { data, error } = await supabase
-      .from('jobs')
-      .insert([jobData])
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Erreur createJob:', error);
-      if (error.code === '42501') {
-        throw new Error('Vous n\'avez pas les permissions pour créer une annonce');
+      if (error) {
+        console.error('Erreur lors de la création:', error);
+        throw new Error('Erreur lors de la création de la mission');
       }
-      throw new Error(error.message || 'Erreur lors de la création de l\'annonce');
+
+      // Invalider le cache
+      this.clearCache();
+      return { success: true, data: data[0] };
+    } catch (error) {
+      console.error('Erreur createJob:', error);
+      throw error;
     }
-    
-    return data;
   },
 
+  // Mettre à jour une mission
   async updateJob(id, jobData) {
     if (!isSupabaseConfigured()) {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('Vous devez être connecté pour modifier une annonce');
-    }
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .update(jobData)
+        .eq('id', id)
+        .select();
 
-    const { data, error } = await supabase
-      .from('jobs')
-      .update(jobData)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Erreur updateJob:', error);
-      if (error.code === '42501') {
-        throw new Error('Vous n\'avez pas les permissions pour modifier cette annonce');
+      if (error) {
+        console.error('Erreur lors de la mise à jour:', error);
+        throw new Error('Erreur lors de la mise à jour de la mission');
       }
-      throw new Error(error.message || 'Erreur lors de la modification de l\'annonce');
+
+      // Invalider le cache
+      this.clearCache();
+      return { success: true, data: data[0] };
+    } catch (error) {
+      console.error('Erreur updateJob:', error);
+      throw error;
     }
-    
-    return data;
   },
 
+  // Supprimer une mission
   async deleteJob(id) {
     if (!isSupabaseConfigured()) {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('Vous devez être connecté pour supprimer une annonce');
-    }
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', id);
 
-    const { error } = await supabase
-      .from('jobs')
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Erreur deleteJob:', error);
-      if (error.code === '42501') {
-        throw new Error('Vous n\'avez pas les permissions pour supprimer cette annonce');
+      if (error) {
+        console.error('Erreur lors de la suppression:', error);
+        throw new Error('Erreur lors de la suppression de la mission');
       }
-      throw new Error(error.message || 'Erreur lors de la suppression de l\'annonce');
+
+      // Invalider le cache
+      this.clearCache();
+      return { success: true };
+    } catch (error) {
+      console.error('Erreur deleteJob:', error);
+      throw error;
     }
   },
 
+  // Incrémenter le nombre de candidatures
   async incrementApplicants(jobId) {
     if (!isSupabaseConfigured()) {
       return { success: false, message: 'Service de base de données non disponible' };
@@ -223,20 +253,34 @@ export const jobService = {
 
     try {
       const { data, error } = await supabase
-        .rpc('increment_applicants', { p_job_id: jobId });
-      
+        .from('jobs')
+        .select('applicants')
+        .eq('id', jobId)
+        .single();
+
       if (error) {
-        console.error('Erreur incrementApplicants:', error);
-        throw error;
+        console.error('Erreur lors de la récupération:', error);
+        return { success: false, message: 'Mission non trouvée' };
       }
-      
-      return data || { success: true, message: 'Candidature enregistrée' };
+
+      const newCount = (data.applicants || 0) + 1;
+
+      const { error: updateError } = await supabase
+        .from('jobs')
+        .update({ applicants: newCount })
+        .eq('id', jobId);
+
+      if (updateError) {
+        console.error('Erreur lors de la mise à jour:', updateError);
+        return { success: false, message: 'Erreur lors de la mise à jour' };
+      }
+
+      // Invalider le cache
+      this.clearCache();
+      return { success: true, newCount };
     } catch (error) {
-      console.error('Erreur:', error);
-      return { 
-        success: false, 
-        message: 'Erreur lors de l\'enregistrement de la candidature' 
-      };
+      console.error('Erreur incrementApplicants:', error);
+      return { success: false, message: 'Erreur technique' };
     }
   }
 };
