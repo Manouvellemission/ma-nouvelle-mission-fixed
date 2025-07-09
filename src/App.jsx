@@ -6,6 +6,10 @@ import { jobService } from './services/jobService';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import SkeletonLoader from './components/ui/SkeletonLoader';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import MissionsPage from './components/ui/MissionsPage';
+import { fetchJobsHome } from './services/jobService';
+
 
 // Validation des données
 const validateJobData = (jobData) => {
