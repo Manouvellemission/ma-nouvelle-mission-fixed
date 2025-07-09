@@ -327,9 +327,11 @@ function JobBoardContent() {
             </div>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <a href="#jobs" className="hover:text-blue-600 transition">Missions</a>
-              <a href="#about" className="hover:text-blue-600 transition">À propos</a>
-              <a href="#contact" className="hover:text-blue-600 transition">Contact</a>
+            <Link to="/" className="hover:text-blue-600 transition">Accueil</Link>
+            <Link to="/missions" className="hover:text-blue-600 transition">Missions</Link>
+            <a href="#about" className="hover:text-blue-600 transition">À propos</a>
+            <a href="#contact" className="hover:text-blue-600 transition">Contact</a>
+
               
                   <button
                     onClick={() => fetchJobs(true)}
