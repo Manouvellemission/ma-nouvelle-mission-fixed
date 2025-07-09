@@ -113,54 +113,6 @@ let jobsCache = null;
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-// Ajouter à la fin du fichier, avant l'export
-export const fetchJobsPaginated = async (page = 1, limit = 12) => {
-  try {
-    const start = (page - 1) * limit;
-    const end = start + limit - 1;
-    
-    const { data, error, count } = await supabase
-      .from('jobs')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(start, end);
-
-    if (error) throw error;
-    
-    return {
-      jobs: data || [],
-      totalCount: count || 0,
-      totalPages: Math.ceil((count || 0) / limit),
-      currentPage: page
-    };
-  } catch (error) {
-    console.error('Erreur pagination:', error);
-    return {
-      jobs: [],
-      totalCount: 0,
-      totalPages: 0,
-      currentPage: 1
-    };
-  }
-};
-
-// Modifier aussi fetchJobs pour limiter à 6 sur l'accueil
-export const fetchJobsHome = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(6); // Limité à 6 pour l'accueil
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Erreur fetchJobsHome:', error);
-    return [];
-  }
-};
-
 export const jobService = {
   // Récupérer toutes les missions avec cache et timeout
   async fetchJobs() {
@@ -330,6 +282,98 @@ export const jobService = {
       console.error('Erreur incrementApplicants:', error);
       return { success: false, message: 'Erreur technique' };
     }
+  }
+};
+
+
+// ✅ NOUVELLES FONCTIONS POUR LA PAGINATION ET L'ACCUEIL
+
+// Récupérer 6 missions pour l'accueil
+export const fetchJobsHome = async () => {
+  if (!isSupabaseConfigured) {
+    console.warn('Supabase non configuré, utilisation des données de fallback (6 premières)');
+    return FALLBACK_JOBS.slice(0, 6);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(6); // Limité à 6 pour l'accueil
+
+    if (error) {
+      console.error('Erreur fetchJobsHome:', error);
+      return FALLBACK_JOBS.slice(0, 6);
+    }
+    
+    return data || FALLBACK_JOBS.slice(0, 6);
+  } catch (error) {
+    console.error('Erreur fetchJobsHome:', error);
+    return FALLBACK_JOBS.slice(0, 6);
+  }
+};
+
+// Récupérer les missions avec pagination
+export const fetchJobsPaginated = async (page = 1, limit = 12) => {
+  if (!isSupabaseConfigured) {
+    console.warn('Supabase non configuré, utilisation des données de fallback avec pagination simulée');
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedJobs = FALLBACK_JOBS.slice(start, end);
+    
+    return {
+      jobs: paginatedJobs,
+      totalCount: FALLBACK_JOBS.length,
+      totalPages: Math.ceil(FALLBACK_JOBS.length / limit),
+      currentPage: page
+    };
+  }
+
+  try {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    
+    const { data, error, count } = await supabase
+      .from('jobs')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(start, end);
+
+    if (error) {
+      console.error('Erreur fetchJobsPaginated:', error);
+      // Fallback avec pagination simulée
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      const paginatedJobs = FALLBACK_JOBS.slice(start, end);
+      
+      return {
+        jobs: paginatedJobs,
+        totalCount: FALLBACK_JOBS.length,
+        totalPages: Math.ceil(FALLBACK_JOBS.length / limit),
+        currentPage: page
+      };
+    }
+    
+    return {
+      jobs: data || [],
+      totalCount: count || 0,
+      totalPages: Math.ceil((count || 0) / limit),
+      currentPage: page
+    };
+  } catch (error) {
+    console.error('Erreur fetchJobsPaginated:', error);
+    // Fallback avec pagination simulée
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedJobs = FALLBACK_JOBS.slice(start, end);
+    
+    return {
+      jobs: paginatedJobs,
+      totalCount: FALLBACK_JOBS.length,
+      totalPages: Math.ceil(FALLBACK_JOBS.length / limit),
+      currentPage: page
+    };
   }
 };
 
