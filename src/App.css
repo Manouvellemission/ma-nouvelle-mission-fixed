@@ -1,7 +1,5 @@
 /* src/App.css - Styles personnalisés pour Ma Nouvelle Mission */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* Animations personnalisées */
 @keyframes fadeIn {
