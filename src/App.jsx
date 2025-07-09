@@ -619,10 +619,18 @@ function JobBoardContent() {
                   </span>
                 </div>
                 
-                <p className={`job-description ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4`}>
+                <p className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-4`}
+                   style={{
+                     overflow: 'hidden',
+                     textOverflow: 'ellipsis',
+                     display: '-webkit-box',
+                     WebkitLineClamp: 3,
+                     WebkitBoxOrient: 'vertical',
+                     wordBreak: 'break-word'
+                   }}>
                 {job.description}
                 </p>
-                
+
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">
                     {new Date(job.posted_date).toLocaleDateString('fr-FR')}
