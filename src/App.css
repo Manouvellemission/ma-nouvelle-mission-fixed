@@ -160,3 +160,16 @@
   }
 }
 
+/* Limiter la description à 3 lignes avec ... */
+.job-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5;
+  max-height: 4.5em; /* 3 lignes × 1.5 line-height */
+  word-break: break-word;
+}
+
+
