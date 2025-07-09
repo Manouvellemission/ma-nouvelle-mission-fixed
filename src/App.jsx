@@ -379,9 +379,11 @@ function JobBoardContent() {
         {mobileMenuOpen && (
           <div className={`md:hidden ${bgColor} border-t ${borderColor} p-4`}>
             <nav className="flex flex-col space-y-3">
-              <a href="#jobs" className="hover:text-blue-600">Missions</a>
-              <a href="#about" className="hover:text-blue-600">À propos</a>
-              <a href="#contact" className="hover:text-blue-600">Contact</a>
+            <Link to="/" className="hover:text-blue-600">Accueil</Link>
+            <Link to="/missions" className="hover:text-blue-600">Missions</Link>
+            <a href="#about" className="hover:text-blue-600">À propos</a>
+            <a href="#contact" className="hover:text-blue-600">Contact</a>
+
               <button
                 onClick={() => {
                   fetchJobs();
@@ -717,11 +719,13 @@ function JobBoardContent() {
             <div>
               <h4 className="font-semibold mb-4">Navigation</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#jobs" className="hover:text-white">Missions</a></li>
-                <li><a href="#about" className="hover:text-white">À propos</a></li>
-                <li><a href="#contact" className="hover:text-white">Contact</a></li>
-              </ul>
-            </div>
+              <li><Link to="/" className="hover:text-white">Accueil</Link></li>
+              <li><Link to="/missions" className="hover:text-white">Missions</Link></li>
+              <li><a href="#about" className="hover:text-white">À propos</a></li>
+              <li><a href="#contact" className="hover:text-white">Contact</a></li>
+            </ul>
+          </div>
+
             
             <div>
               <h4 className="font-semibold mb-4">Nos sites partenaires</h4>
