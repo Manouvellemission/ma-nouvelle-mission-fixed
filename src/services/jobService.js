@@ -1,4 +1,4 @@
-/ src/services/jobService.js - Service de gestion des emplois avec fallback
+// src/services/jobService.js - Service de gestion des emplois avec fallback
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Données de fallback si Supabase n'est pas configuré
