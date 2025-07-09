@@ -113,6 +113,54 @@ let jobsCache = null;
 let cacheTimestamp = null;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Ajouter à la fin du fichier, avant l'export
+export const fetchJobsPaginated = async (page = 1, limit = 12) => {
+  try {
+    const start = (page - 1) * limit;
+    const end = start + limit - 1;
+    
+    const { data, error, count } = await supabase
+      .from('jobs')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(start, end);
+
+    if (error) throw error;
+    
+    return {
+      jobs: data || [],
+      totalCount: count || 0,
+      totalPages: Math.ceil((count || 0) / limit),
+      currentPage: page
+    };
+  } catch (error) {
+    console.error('Erreur pagination:', error);
+    return {
+      jobs: [],
+      totalCount: 0,
+      totalPages: 0,
+      currentPage: 1
+    };
+  }
+};
+
+// Modifier aussi fetchJobs pour limiter à 6 sur l'accueil
+export const fetchJobsHome = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(6); // Limité à 6 pour l'accueil
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Erreur fetchJobsHome:', error);
+    return [];
+  }
+};
+
 export const jobService = {
   // Récupérer toutes les missions avec cache et timeout
   async fetchJobs() {
