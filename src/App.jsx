@@ -8,6 +8,7 @@ import SkeletonLoader from './components/ui/SkeletonLoader';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import MissionsPage from './components/ui/MissionsPage';
+import AboutPage from './components/ui/AboutPage' ;
 import { fetchJobsHome } from './services/jobService';
 
 // Validation des données
@@ -474,7 +475,7 @@ const handleJobSubmit = async () => {
             <nav className="hidden md:flex items-center space-x-6">
             <Link to="/" className="hover:text-blue-600 transition">Accueil</Link>
             <Link to="/missions" className="hover:text-blue-600 transition">Missions</Link>
-            <a href="#about" className="hover:text-blue-600 transition">À propos</a>
+            <Link to="/about" className="hover:text-blue-600 transition">À propos</Link>
             <a href="#contact" className="hover:text-blue-600 transition">Contact</a>
 
               
@@ -526,7 +527,7 @@ const handleJobSubmit = async () => {
             <nav className="flex flex-col space-y-3">
             <Link to="/" className="hover:text-blue-600">Accueil</Link>
             <Link to="/missions" className="hover:text-blue-600">Missions</Link>
-            <a href="#about" className="hover:text-blue-600">À propos</a>
+            <Link to="/about" className="hover:text-blue-600">À propos</Link>
             <a href="#contact" className="hover:text-blue-600">Contact</a>
 
               <button
@@ -881,7 +882,7 @@ const handleJobSubmit = async () => {
               <ul className="space-y-2 text-gray-400">
               <li><Link to="/" className="hover:text-white">Accueil</Link></li>
               <li><Link to="/missions" className="hover:text-white">Missions</Link></li>
-              <li><a href="#about" className="hover:text-white">À propos</a></li>
+              <li><Link to="/about" className="hover:text-white">À propos</Link></li>
               <li><a href="#contact" className="hover:text-white">Contact</a></li>
             </ul>
           </div>
@@ -1020,6 +1021,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<JobBoardContent />} />
           <Route path="/missions" element={<MissionsPageWrapper />} />
+          <Route path="/about" element={<AboutPage />} />  
         </Routes>
       </AuthProvider>
     </Router>
