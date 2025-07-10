@@ -46,15 +46,15 @@ const AboutPage = ({ darkMode = false }) => {
   ];
 
   const stats = [
-    { number: '500+', label: 'Missions actives', icon: Briefcase, gradient: 'from-blue-500 to-blue-600' },
+    { number: '50+', label: 'Missions actives', icon: Briefcase, gradient: 'from-blue-500 to-blue-600' },
     { number: '1.2k+', label: 'Freelances', icon: Users, gradient: 'from-purple-500 to-purple-600' },
-    { number: '150+', label: 'Entreprises', icon: Globe, gradient: 'from-green-500 to-green-600' },
+    { number: '20+', label: 'Entreprises', icon: Globe, gradient: 'from-green-500 to-green-600' },
     { number: '95%', label: 'Satisfaction', icon: Sparkles, gradient: 'from-orange-500 to-orange-600' },
   ];
 
   const features = [
     { icon: Zap, title: 'Matching rapide', desc: 'Trouvez la mission idéale en quelques clics' },
-    { icon: Shield, title: 'Paiements sécurisés', desc: 'Garantie de paiement pour chaque mission' },
+    { icon: Shield, title: 'Maximiser vos revenus', desc: 'Grace à nos missions freelances' },
     { icon: TrendingUp, title: 'Évolution continue', desc: 'Des missions qui font progresser votre carrière' },
   ];
 
@@ -249,7 +249,7 @@ const AboutPage = ({ darkMode = false }) => {
               <div className="flex items-start gap-3">
                 <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
                 <p className={theme.textSecondary}>
-                  Plus de 1000 missions réussies à notre actif
+                  Plus de 100 missions réussies à notre actif
                 </p>
               </div>
               <div className="flex items-start gap-3">
