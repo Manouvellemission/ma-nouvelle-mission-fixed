@@ -122,7 +122,7 @@ export const jobService = {
       return jobsCache;
     }
 
-    if (!isSupabaseConfigured) {
+    if (!isSupabaseConfigured()) {
       console.warn('Supabase non configuré, utilisation des données de fallback');
       jobsCache = FALLBACK_JOBS;
       cacheTimestamp = Date.now();
@@ -172,22 +172,59 @@ export const jobService = {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
 
+    console.log('[jobService.createJob] Début création:', {
+      title: jobData.title,
+      timestamp: new Date().toISOString()
+    });
+
     try {
+      // S'assurer que les données sont correctement formatées
+      const cleanData = {
+        ...jobData,
+        requirements: Array.isArray(jobData.requirements) 
+          ? jobData.requirements 
+          : jobData.requirements.split('\n').filter(r => r.trim()),
+        benefits: Array.isArray(jobData.benefits)
+          ? jobData.benefits
+          : jobData.benefits.split('\n').filter(b => b.trim()),
+        applicants: jobData.applicants || 0,
+        created_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('jobs')
-        .insert([jobData])
+        .insert([cleanData])
         .select();
 
       if (error) {
-        console.error('Erreur lors de la création:', error);
-        throw new Error('Erreur lors de la création de la mission');
+        console.error('[jobService.createJob] Erreur Supabase:', error);
+        
+        // Analyser l'erreur pour un message plus clair
+        if (error.code === '23505') {
+          throw new Error('Une mission avec ces informations existe déjà');
+        } else if (error.code === '23502') {
+          throw new Error('Données manquantes. Veuillez remplir tous les champs obligatoires');
+        } else if (error.message?.includes('JWT')) {
+          throw new Error('Session expirée. Veuillez vous reconnecter');
+        }
+        
+        throw new Error(error.message || 'Erreur lors de la création de la mission');
       }
+
+      if (!data || data.length === 0) {
+        throw new Error('Aucune donnée retournée après création');
+      }
+
+      console.log('[jobService.createJob] Création réussie:', data);
 
       // Invalider le cache
       this.clearCache();
+      
+      console.log('[jobService.createJob] Succès final, cache invalidé');
+      
       return { success: true, data: data[0] };
     } catch (error) {
-      console.error('Erreur createJob:', error);
+      console.error('[jobService.createJob] Erreur finale:', error);
       throw error;
     }
   },
@@ -198,23 +235,55 @@ export const jobService = {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
 
+    console.log('[jobService.updateJob] Début mise à jour:', {
+      id,
+      title: jobData.title,
+      timestamp: new Date().toISOString()
+    });
+
     try {
+      // S'assurer que les données sont correctement formatées
+      const cleanData = {
+        ...jobData,
+        requirements: Array.isArray(jobData.requirements) 
+          ? jobData.requirements 
+          : jobData.requirements.split('\n').filter(r => r.trim()),
+        benefits: Array.isArray(jobData.benefits)
+          ? jobData.benefits
+          : jobData.benefits.split('\n').filter(b => b.trim()),
+        updated_at: new Date().toISOString()
+      };
+
       const { data, error } = await supabase
         .from('jobs')
-        .update(jobData)
+        .update(cleanData)
         .eq('id', id)
         .select();
 
       if (error) {
-        console.error('Erreur lors de la mise à jour:', error);
-        throw new Error('Erreur lors de la mise à jour de la mission');
+        console.error('[jobService.updateJob] Erreur Supabase:', error);
+        
+        if (error.message?.includes('JWT')) {
+          throw new Error('Session expirée. Veuillez vous reconnecter');
+        }
+        
+        throw new Error(error.message || 'Erreur lors de la mise à jour de la mission');
       }
+
+      if (!data || data.length === 0) {
+        throw new Error('Mission non trouvée ou non modifiée');
+      }
+
+      console.log('[jobService.updateJob] Mise à jour réussie:', data);
 
       // Invalider le cache
       this.clearCache();
+      
+      console.log('[jobService.updateJob] Succès final, cache invalidé');
+      
       return { success: true, data: data[0] };
     } catch (error) {
-      console.error('Erreur updateJob:', error);
+      console.error('[jobService.updateJob] Erreur finale:', error);
       throw error;
     }
   },
@@ -225,6 +294,8 @@ export const jobService = {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
 
+    console.log('[jobService.deleteJob] Suppression job:', id);
+
     try {
       const { error } = await supabase
         .from('jobs')
@@ -232,15 +303,23 @@ export const jobService = {
         .eq('id', id);
 
       if (error) {
-        console.error('Erreur lors de la suppression:', error);
-        throw new Error('Erreur lors de la suppression de la mission');
+        console.error('[jobService.deleteJob] Erreur Supabase:', error);
+        
+        if (error.message?.includes('JWT')) {
+          throw new Error('Session expirée. Veuillez vous reconnecter');
+        }
+        
+        throw new Error(error.message || 'Erreur lors de la suppression de la mission');
       }
 
       // Invalider le cache
       this.clearCache();
+      
+      console.log('[jobService.deleteJob] Suppression réussie');
+      
       return { success: true };
     } catch (error) {
-      console.error('Erreur deleteJob:', error);
+      console.error('[jobService.deleteJob] Erreur finale:', error);
       throw error;
     }
   },
@@ -285,12 +364,11 @@ export const jobService = {
   }
 };
 
-
 // ✅ NOUVELLES FONCTIONS POUR LA PAGINATION ET L'ACCUEIL
 
 // Récupérer 6 missions pour l'accueil
 export const fetchJobsHome = async () => {
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured()) {
     console.warn('Supabase non configuré, utilisation des données de fallback (6 premières)');
     return FALLBACK_JOBS.slice(0, 6);
   }
@@ -316,7 +394,7 @@ export const fetchJobsHome = async () => {
 
 // Récupérer les missions avec pagination
 export const fetchJobsPaginated = async (page = 1, limit = 12) => {
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured()) {
     console.warn('Supabase non configuré, utilisation des données de fallback avec pagination simulée');
     const start = (page - 1) * limit;
     const end = start + limit;
