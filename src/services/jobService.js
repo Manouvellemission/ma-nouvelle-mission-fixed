@@ -167,88 +167,89 @@ export const jobService = {
   },
 
   // Créer une nouvelle mission
-  async createJob(jobData) {
-    if (!isSupabaseConfigured()) {
-      throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
+ async createJob(jobData) {
+  if (!isSupabaseConfigured()) {
+    throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
+  }
+
+  console.log('[jobService.createJob] Début création:', {
+    title: jobData.title,
+    timestamp: new Date().toISOString()
+  });
+
+  // Format propre
+  const cleanData = {
+    ...jobData,
+    requirements: Array.isArray(jobData.requirements)
+      ? jobData.requirements
+      : jobData.requirements.split('\n').filter(r => r.trim()),
+    benefits: Array.isArray(jobData.benefits)
+      ? jobData.benefits
+      : jobData.benefits.split('\n').filter(b => b.trim()),
+    applicants: jobData.applicants || 0,
+    created_at: new Date().toISOString()
+  };
+
+  // Log du slug + taille du payload
+  const payloadSize = new Blob([JSON.stringify(cleanData)]).size;
+  console.log(`[jobService.createJob] Slug: ${cleanData.slug}`);
+  console.log(`[jobService.createJob] Taille du payload: ${payloadSize} octets`);
+
+  // Vérif duplication slug
+  const { data: existingSlug, error: slugCheckError } = await supabase
+    .from('jobs')
+    .select('id')
+    .eq('slug', cleanData.slug);
+
+  if (slugCheckError) {
+    console.error('[jobService.createJob] Erreur vérif slug:', slugCheckError);
+  }
+
+  if (existingSlug && existingSlug.length > 0) {
+    throw new Error('Une mission avec ce titre (slug) existe déjà.');
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    console.log('[jobService.createJob] Envoi de la requête Supabase...');
+    const { data, error } = await supabase
+      .from('jobs')
+      .insert([cleanData])
+      .select()
+      .abortSignal(controller.signal);
+
+    clearTimeout(timeout);
+
+    if (error) {
+      console.error('[jobService.createJob] Erreur Supabase:', error);
+      if (error.code === '23505') {
+        throw new Error('Duplicata : une mission identique existe déjà');
+      } else if (error.code === '23502') {
+        throw new Error('Champs obligatoires manquants');
+      } else if (error.message?.includes('JWT')) {
+        throw new Error('Session expirée. Veuillez vous reconnecter');
+      }
+      throw new Error(error.message || 'Erreur inconnue lors de la création');
     }
 
-    console.log('[jobService.createJob] Début création:', {
-      title: jobData.title,
-      timestamp: new Date().toISOString()
-    });
-
-    try {
-      // S'assurer que les données sont correctement formatées
-      const cleanData = {
-        ...jobData,
-        requirements: Array.isArray(jobData.requirements) 
-          ? jobData.requirements 
-          : jobData.requirements.split('\n').filter(r => r.trim()),
-        benefits: Array.isArray(jobData.benefits)
-          ? jobData.benefits
-          : jobData.benefits.split('\n').filter(b => b.trim()),
-        applicants: jobData.applicants || 0,
-        created_at: new Date().toISOString()
-      };
-
-      console.log('[jobService.createJob] Données préparées, envoi à Supabase...');
-
-      // Créer une promesse avec timeout
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout: La requête Supabase prend trop de temps')), 30000);
-      });
-
-      const supabasePromise = supabase
-        .from('jobs')
-        .insert([cleanData])
-        .select();
-
-      console.log('[jobService.createJob] Requête envoyée, attente de la réponse...');
-
-      const { data, error } = await Promise.race([supabasePromise, timeoutPromise]);
-
-      console.log('[jobService.createJob] Réponse reçue:', { data, error });
-
-      if (error) {
-        console.error('[jobService.createJob] Erreur Supabase:', error);
-        console.error('[jobService.createJob] Détails erreur:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        });
-        
-        // Analyser l'erreur pour un message plus clair
-        if (error.code === '23505') {
-          throw new Error('Une mission avec ces informations existe déjà');
-        } else if (error.code === '23502') {
-          throw new Error('Données manquantes. Veuillez remplir tous les champs obligatoires');
-        } else if (error.message?.includes('JWT')) {
-          throw new Error('Session expirée. Veuillez vous reconnecter');
-        }
-        
-        throw new Error(error.message || 'Erreur lors de la création de la mission');
-      }
-
-      if (!data || data.length === 0) {
-        console.error('[jobService.createJob] Pas de données retournées');
-        throw new Error('Aucune donnée retournée après création');
-      }
-
-      console.log('[jobService.createJob] Création réussie:', data);
-
-      // Invalider le cache
-      this.clearCache();
-      
-      console.log('[jobService.createJob] Cache invalidé, retour des données');
-      
-      return { success: true, data: data[0] };
-    } catch (error) {
-      console.error('[jobService.createJob] Erreur finale:', error);
-      console.error('[jobService.createJob] Stack:', error.stack);
-      throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Aucune donnée retournée après insertion');
     }
-  },
+
+    this.clearCache();
+    console.log('[jobService.createJob] Mission créée avec succès');
+    return { success: true, data: data[0] };
+
+  } catch (error) {
+    console.error('[jobService.createJob] Erreur finale:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('La requête Supabase a été annulée (délai dépassé)');
+    }
+    throw error;
+  }
+}
 
   // Mettre à jour une mission
   async updateJob(id, jobData) {
