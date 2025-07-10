@@ -476,7 +476,6 @@ const handleJobSubmit = async () => {
             <Link to="/" className="hover:text-blue-600 transition">Accueil</Link>
             <Link to="/missions" className="hover:text-blue-600 transition">Missions</Link>
             <Link to="/about" className="hover:text-blue-600 transition">À propos</Link>
-            <a href="#contact" className="hover:text-blue-600 transition">Contact</a>
 
               
                   <button
@@ -528,7 +527,6 @@ const handleJobSubmit = async () => {
             <Link to="/" className="hover:text-blue-600">Accueil</Link>
             <Link to="/missions" className="hover:text-blue-600">Missions</Link>
             <Link to="/about" className="hover:text-blue-600">À propos</Link>
-            <a href="#contact" className="hover:text-blue-600">Contact</a>
 
               <button
                 onClick={() => {
@@ -883,7 +881,6 @@ const handleJobSubmit = async () => {
               <li><Link to="/" className="hover:text-white">Accueil</Link></li>
               <li><Link to="/missions" className="hover:text-white">Missions</Link></li>
               <li><Link to="/about" className="hover:text-white">À propos</Link></li>
-              <li><a href="#contact" className="hover:text-white">Contact</a></li>
             </ul>
           </div>
 
