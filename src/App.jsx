@@ -263,8 +263,8 @@ const handleJobSubmit = async () => {
       // Sanitiser les données
       const sanitizedData = sanitizeJobData(jobData);
 
-      // ✅ UTILISER executeWithValidSession POUR GÉRER LA SESSION
-      await executeWithValidSession(async () => {
+   // ✅ UTILISER executeWithValidSession POUR GÉRER LA SESSION
+await executeWithValidSession(async () => {
     if (editingJob) {
         await jobService.updateJob(editingJob.id, sanitizedData);
         setSubmitMessage({
@@ -278,48 +278,35 @@ const handleJobSubmit = async () => {
             text: '✅ Mission créée avec succès !'
         });
     }
-}); 
-      console.log('[SUBMIT] Opération réussie, rechargement des jobs...');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await fetchJobs(true);
+});
 
-// Réinitialiser le formulaire après succès
+// ✅ LOGS ET RECHARGEMENT
+console.log('[SUBMIT] Opération réussie, rechargement des jobs...');
+await new Promise(resolve => setTimeout(resolve, 500));
+await fetchJobs(true);
+
+// ✅ RÉINITIALISER LE FORMULAIRE
 setJobForm({
     title: '',
     company: '',
-        } else {
-          await jobService.createJob(sanitizedData);
-          setSubmitMessage({
-            type: 'success',
-            text: '✅ Mission créée avec succès !'
-          });
-        }
-      });
-      
-      await fetchJobs();
-      
-      // Réinitialiser le formulaire après succès
-      setJobForm({
-        title: '',
-        company: '',
-        location: '',
-        type: 'Mission',
-        salary: '',
-        salaryType: 'TJM',
-        description: '',
-        requirements: '',
-        benefits: '',
-        featured: false
-      });
-      setEditingJob(null);
-      
-      // Fermer la modal après 2 secondes
-      setTimeout(() => {
-        setShowJobForm(false);
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Erreur:', error);
+    location: '',
+    type: 'Mission',
+    salary: '',
+    salaryType: 'TJM',
+    description: '',
+    requirements: '',
+    benefits: '',
+    featured: false
+});
+setEditingJob(null);
+
+// ✅ FERMER LA MODAL APRÈS 2 SECONDES
+setTimeout(() => {
+    setShowJobForm(false);
+}, 2000);
+
+} catch (error) {
+    console.error('[SUBMIT] Erreur:', error);
       
       // ✅ GESTION SPÉCIFIQUE DES ERREURS DE SESSION
       if (error.message?.includes('Session expirée') || error.message?.includes('JWT')) {
