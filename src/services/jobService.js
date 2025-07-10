@@ -170,7 +170,7 @@ export const jobService = {
  async createJob(jobData) {
   if (!isSupabaseConfigured()) {
     throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
-  },
+  }
 
   console.log('[jobService.createJob] Début création:', {
     title: jobData.title,
@@ -249,7 +249,7 @@ export const jobService = {
     }
     throw error;
   }
-}
+},
 
   // Mettre à jour une mission
   async updateJob(id, jobData) {
