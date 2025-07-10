@@ -219,13 +219,11 @@ function JobBoardContent() {
       .replace(/^-|-$/g, '');
   };
 
-  // ✅ FONCTION AMÉLIORÉE AVEC GESTION DE SESSION
 const handleJobSubmit = async () => {
     // Réinitialiser les messages
     setSubmitMessage(null);
     setIsSubmittingJob(true);
 
-    // ✅ AJOUTER CE LOG ICI
     console.log('[SUBMIT] Début de soumission:', {
       isEditing: !!editingJob,
       isAdmin,
@@ -235,6 +233,8 @@ const handleJobSubmit = async () => {
     });
 
     try {
+      console.log('[SUBMIT] Création des données du job...');
+      
       const jobData = {
         title: jobForm.title,
         company: jobForm.company,
@@ -250,65 +250,81 @@ const handleJobSubmit = async () => {
         posted_date: new Date().toISOString().split('T')[0]
       };
 
+      console.log('[SUBMIT] Données créées:', jobData);
+
       // Valider les données
+      console.log('[SUBMIT] Validation des données...');
       const errors = validateJobData(jobData);
+      
       if (Object.keys(errors).length > 0) {
+        console.error('[SUBMIT] Erreurs de validation:', errors);
         setSubmitMessage({
           type: 'error',
           text: 'Erreurs de validation:\n' + Object.values(errors).join('\n')
         });
+        setIsSubmittingJob(false);
         return;
       }
 
+      console.log('[SUBMIT] Validation OK, sanitisation...');
+      
       // Sanitiser les données
       const sanitizedData = sanitizeJobData(jobData);
+      
+      console.log('[SUBMIT] Données sanitisées:', sanitizedData);
+      console.log('[SUBMIT] Appel de executeWithValidSession...');
 
-   // ✅ UTILISER executeWithValidSession POUR GÉRER LA SESSION
-await executeWithValidSession(async () => {
-    if (editingJob) {
-        await jobService.updateJob(editingJob.id, sanitizedData);
-        setSubmitMessage({
+      // UTILISER executeWithValidSession POUR GÉRER LA SESSION
+      await executeWithValidSession(async () => {
+        console.log('[SUBMIT] Dans executeWithValidSession');
+        
+        if (editingJob) {
+          console.log('[SUBMIT] Mode édition, ID:', editingJob.id);
+          await jobService.updateJob(editingJob.id, sanitizedData);
+          setSubmitMessage({
             type: 'success',
             text: '✅ Mission mise à jour avec succès !'
-        });
-    } else {
-        await jobService.createJob(sanitizedData);
-        setSubmitMessage({
+          });
+        } else {
+          console.log('[SUBMIT] Mode création');
+          await jobService.createJob(sanitizedData);
+          setSubmitMessage({
             type: 'success',
             text: '✅ Mission créée avec succès !'
-        });
-    }
-});
+          });
+        }
+      });
 
-// ✅ LOGS ET RECHARGEMENT
-console.log('[SUBMIT] Opération réussie, rechargement des jobs...');
-await new Promise(resolve => setTimeout(resolve, 500));
-await fetchJobs(true);
+      // LOGS ET RECHARGEMENT
+      console.log('[SUBMIT] Opération réussie, rechargement des jobs...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await fetchJobs(true);
 
-// ✅ RÉINITIALISER LE FORMULAIRE
-setJobForm({
-    title: '',
-    company: '',
-    location: '',
-    type: 'Mission',
-    salary: '',
-    salaryType: 'TJM',
-    description: '',
-    requirements: '',
-    benefits: '',
-    featured: false
-});
-setEditingJob(null);
+      // RÉINITIALISER LE FORMULAIRE
+      setJobForm({
+        title: '',
+        company: '',
+        location: '',
+        type: 'Mission',
+        salary: '',
+        salaryType: 'TJM',
+        description: '',
+        requirements: '',
+        benefits: '',
+        featured: false
+      });
+      setEditingJob(null);
 
-// ✅ FERMER LA MODAL APRÈS 2 SECONDES
-setTimeout(() => {
-    setShowJobForm(false);
-}, 2000);
+      // FERMER LA MODAL APRÈS 2 SECONDES
+      setTimeout(() => {
+        setShowJobForm(false);
+      }, 2000);
 
-} catch (error) {
-    console.error('[SUBMIT] Erreur:', error);
+    } catch (error) {
+      console.error('[SUBMIT] Erreur complète:', error);
+      console.error('[SUBMIT] Stack trace:', error.stack);
       
-      // ✅ GESTION SPÉCIFIQUE DES ERREURS DE SESSION
+      // GESTION SPÉCIFIQUE DES ERREURS DE SESSION
       if (error.message?.includes('Session expirée') || error.message?.includes('JWT')) {
         setSubmitMessage({
           type: 'error',
