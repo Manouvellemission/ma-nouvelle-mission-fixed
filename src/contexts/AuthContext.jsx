@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.jsx - Contexte d'authentification sécurisé avec gestion des sessions
+// src/contexts/AuthContext.jsx - VERSION CORRIGÉE SANS BOUCLE INFINIE
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, checkIsAdmin, isSupabaseConfigured } from '../lib/supabase';
 
@@ -105,6 +105,28 @@ export const AuthProvider = ({ children }) => {
     }
   }, [isSessionValid, refreshSession]);
 
+  const checkUser = async () => {
+    if (!isSupabaseConfigured()) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        const adminStatus = await checkIsAdmin(session.user.id);
+        setIsAdmin(adminStatus);
+        setSessionExpired(false);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification utilisateur:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ USEEFFECT PRINCIPAL - SANS BOUCLE INFINIE
   useEffect(() => {
     // Si Supabase n'est pas configuré, on passe en mode dégradé
     if (!isSupabaseConfigured()) {
@@ -134,40 +156,27 @@ export const AuthProvider = ({ children }) => {
       }
     );
 
-    // ✅ RAFRAÎCHISSEMENT AUTOMATIQUE TOUTES LES 45 MINUTES
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []); // ✅ TABLEAU DE DÉPENDANCES VIDE
+
+  // ✅ USEEFFECT SÉPARÉ POUR LE RAFRAÎCHISSEMENT AUTOMATIQUE
+  useEffect(() => {
+    if (!user || !isAdmin) return;
+
+    console.log('Configuration du rafraîchissement automatique de session...');
+    
     const refreshInterval = setInterval(async () => {
-      if (user && isAdmin) {
-        console.log('Rafraîchissement automatique de session...');
-        await refreshSession();
-      }
+      console.log('Rafraîchissement automatique de session...');
+      await refreshSession();
     }, 45 * 60 * 1000); // 45 minutes
 
     return () => {
-      subscription?.unsubscribe();
+      console.log('Nettoyage du rafraîchissement automatique');
       clearInterval(refreshInterval);
     };
-  }, [user, isAdmin, refreshSession]);
-
-  const checkUser = async () => {
-    if (!isSupabaseConfigured()) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const adminStatus = await checkIsAdmin(session.user.id);
-        setIsAdmin(adminStatus);
-        setSessionExpired(false);
-      }
-    } catch (error) {
-      console.error('Erreur lors de la vérification utilisateur:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, isAdmin]); // ✅ PAS refreshSession dans les dépendances
 
   const signIn = async (email, password) => {
     if (!isSupabaseConfigured()) {
