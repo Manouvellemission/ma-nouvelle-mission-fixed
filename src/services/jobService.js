@@ -167,7 +167,7 @@ export const jobService = {
   },
 
   // Créer une nouvelle mission
-  async createJob(jobData) {
+    async createJob(jobData) {
     if (!isSupabaseConfigured()) {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
@@ -191,13 +191,32 @@ export const jobService = {
         created_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
+      console.log('[jobService.createJob] Données préparées, envoi à Supabase...');
+
+      // Créer une promesse avec timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout: La requête Supabase prend trop de temps')), 10000);
+      });
+
+      const supabasePromise = supabase
         .from('jobs')
         .insert([cleanData])
         .select();
 
+      console.log('[jobService.createJob] Requête envoyée, attente de la réponse...');
+
+      const { data, error } = await Promise.race([supabasePromise, timeoutPromise]);
+
+      console.log('[jobService.createJob] Réponse reçue:', { data, error });
+
       if (error) {
         console.error('[jobService.createJob] Erreur Supabase:', error);
+        console.error('[jobService.createJob] Détails erreur:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         
         // Analyser l'erreur pour un message plus clair
         if (error.code === '23505') {
@@ -212,6 +231,7 @@ export const jobService = {
       }
 
       if (!data || data.length === 0) {
+        console.error('[jobService.createJob] Pas de données retournées');
         throw new Error('Aucune donnée retournée après création');
       }
 
@@ -220,11 +240,12 @@ export const jobService = {
       // Invalider le cache
       this.clearCache();
       
-      console.log('[jobService.createJob] Succès final, cache invalidé');
+      console.log('[jobService.createJob] Cache invalidé, retour des données');
       
       return { success: true, data: data[0] };
     } catch (error) {
       console.error('[jobService.createJob] Erreur finale:', error);
+      console.error('[jobService.createJob] Stack:', error.stack);
       throw error;
     }
   },
