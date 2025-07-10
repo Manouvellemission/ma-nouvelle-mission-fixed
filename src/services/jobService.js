@@ -132,7 +132,7 @@ export const jobService = {
     try {
       // Timeout pour éviter les blocages
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 8000)
+        setTimeout(() => reject(new Error('Timeout')), 30000)
       );
 
       const supabasePromise = supabase
@@ -167,7 +167,7 @@ export const jobService = {
   },
 
   // Créer une nouvelle mission
-    async createJob(jobData) {
+  async createJob(jobData) {
     if (!isSupabaseConfigured()) {
       throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
     }
@@ -195,7 +195,7 @@ export const jobService = {
 
       // Créer une promesse avec timeout
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Timeout: La requête Supabase prend trop de temps')), 10000);
+        setTimeout(() => reject(new Error('Timeout: La requête Supabase prend trop de temps')), 30000);
       });
 
       const supabasePromise = supabase
@@ -275,16 +275,37 @@ export const jobService = {
         updated_at: new Date().toISOString()
       };
 
-      const { data, error } = await supabase
+      console.log('[jobService.updateJob] Données préparées, envoi à Supabase...');
+
+      // Créer une promesse avec timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout: La requête Supabase prend trop de temps')), 30000);
+      });
+
+      const supabasePromise = supabase
         .from('jobs')
         .update(cleanData)
         .eq('id', id)
         .select();
 
+      console.log('[jobService.updateJob] Requête envoyée, attente de la réponse...');
+
+      const { data, error } = await Promise.race([supabasePromise, timeoutPromise]);
+
+      console.log('[jobService.updateJob] Réponse reçue:', { data, error });
+
       if (error) {
         console.error('[jobService.updateJob] Erreur Supabase:', error);
+        console.error('[jobService.updateJob] Détails erreur:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         
-        if (error.message?.includes('JWT')) {
+        if (error.code === '23502') {
+          throw new Error('Données manquantes. Veuillez remplir tous les champs obligatoires');
+        } else if (error.message?.includes('JWT')) {
           throw new Error('Session expirée. Veuillez vous reconnecter');
         }
         
@@ -292,6 +313,7 @@ export const jobService = {
       }
 
       if (!data || data.length === 0) {
+        console.error('[jobService.updateJob] Pas de données retournées');
         throw new Error('Mission non trouvée ou non modifiée');
       }
 
@@ -300,11 +322,12 @@ export const jobService = {
       // Invalider le cache
       this.clearCache();
       
-      console.log('[jobService.updateJob] Succès final, cache invalidé');
+      console.log('[jobService.updateJob] Cache invalidé, retour des données');
       
       return { success: true, data: data[0] };
     } catch (error) {
       console.error('[jobService.updateJob] Erreur finale:', error);
+      console.error('[jobService.updateJob] Stack:', error.stack);
       throw error;
     }
   },
@@ -318,10 +341,19 @@ export const jobService = {
     console.log('[jobService.deleteJob] Suppression job:', id);
 
     try {
-      const { error } = await supabase
+      // Créer une promesse avec timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout: La requête Supabase prend trop de temps')), 30000);
+      });
+
+      const supabasePromise = supabase
         .from('jobs')
         .delete()
         .eq('id', id);
+
+      console.log('[jobService.deleteJob] Requête envoyée, attente de la réponse...');
+
+      const { error } = await Promise.race([supabasePromise, timeoutPromise]);
 
       if (error) {
         console.error('[jobService.deleteJob] Erreur Supabase:', error);
@@ -333,14 +365,15 @@ export const jobService = {
         throw new Error(error.message || 'Erreur lors de la suppression de la mission');
       }
 
+      console.log('[jobService.deleteJob] Suppression réussie');
+
       // Invalider le cache
       this.clearCache();
-      
-      console.log('[jobService.deleteJob] Suppression réussie');
       
       return { success: true };
     } catch (error) {
       console.error('[jobService.deleteJob] Erreur finale:', error);
+      console.error('[jobService.deleteJob] Stack:', error.stack);
       throw error;
     }
   },
@@ -352,11 +385,16 @@ export const jobService = {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('applicants')
-        .eq('id', jobId)
-        .single();
+      // Créer une promesse avec timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout')), 30000);
+      });
+
+      // Récupérer le nombre actuel
+      const { data, error } = await Promise.race([
+        supabase.from('jobs').select('applicants').eq('id', jobId).single(),
+        timeoutPromise
+      ]);
 
       if (error) {
         console.error('Erreur lors de la récupération:', error);
@@ -365,10 +403,11 @@ export const jobService = {
 
       const newCount = (data.applicants || 0) + 1;
 
-      const { error: updateError } = await supabase
-        .from('jobs')
-        .update({ applicants: newCount })
-        .eq('id', jobId);
+      // Mettre à jour le compteur
+      const { error: updateError } = await Promise.race([
+        supabase.from('jobs').update({ applicants: newCount }).eq('id', jobId),
+        timeoutPromise
+      ]);
 
       if (updateError) {
         console.error('Erreur lors de la mise à jour:', updateError);
@@ -395,11 +434,18 @@ export const fetchJobsHome = async () => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(6); // Limité à 6 pour l'accueil
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout')), 30000)
+    );
+
+    const { data, error } = await Promise.race([
+      supabase
+        .from('jobs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(6),
+      timeoutPromise
+    ]);
 
     if (error) {
       console.error('Erreur fetchJobsHome:', error);
@@ -433,11 +479,18 @@ export const fetchJobsPaginated = async (page = 1, limit = 12) => {
     const start = (page - 1) * limit;
     const end = start + limit - 1;
     
-    const { data, error, count } = await supabase
-      .from('jobs')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(start, end);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout')), 30000)
+    );
+
+    const { data, error, count } = await Promise.race([
+      supabase
+        .from('jobs')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(start, end),
+      timeoutPromise
+    ]);
 
     if (error) {
       console.error('Erreur fetchJobsPaginated:', error);
@@ -475,4 +528,3 @@ export const fetchJobsPaginated = async (page = 1, limit = 12) => {
     };
   }
 };
-
