@@ -98,27 +98,24 @@ function JobBoardContent() {
   const [submitMessage, setSubmitMessage] = useState(null); // {type: 'success'|'error', text: '...'}
   
   // Charger les jobs avec gestion améliorée du loading (CORRIGÉ)
-  const fetchJobs = async (showDataLoading = false) => {
+const fetchJobs = async (showDataLoading = false) => {
     if (showDataLoading) {
       setDataLoading(true);
     }
     
     try {
-      console.log('[FETCH] Début du chargement des jobs...');
-      const jobsData = await fetchJobsHome(); // Limite à 6 missions pour l'accueil
-      console.log('[FETCH] Jobs chargés:', jobsData.length);
-      setJobs(jobsData); // CORRIGÉ : utiliser jobsData au lieu de data
-      setFilteredJobs(jobsData); // CORRIGÉ : utiliser jobsData au lieu de data
+      const jobsData = await jobService.fetchJobs(); // Utiliser fetchJobs au lieu de fetchJobsHome
+      setJobs(jobsData);
+      setFilteredJobs(jobsData);
     } catch (error) {
       console.error('Erreur lors du chargement:', error);
-      // Utiliser des données de fallback si erreur
       setJobs([]);
       setFilteredJobs([]);
     } finally {
       setInitialLoading(false);
       setDataLoading(false);
     }
-  };
+};
 
   // Charger les jobs au démarrage
   useEffect(() => {
@@ -220,21 +217,10 @@ function JobBoardContent() {
   };
 
 const handleJobSubmit = async () => {
-    // Réinitialiser les messages
     setSubmitMessage(null);
     setIsSubmittingJob(true);
 
-    console.log('[SUBMIT] Début de soumission:', {
-      isEditing: !!editingJob,
-      isAdmin,
-      isSupabaseConfigured,
-      sessionExpired,
-      timestamp: new Date().toISOString()
-    });
-
     try {
-      console.log('[SUBMIT] Création des données du job...');
-      
       const jobData = {
         title: jobForm.title,
         company: jobForm.company,
@@ -250,14 +236,8 @@ const handleJobSubmit = async () => {
         posted_date: new Date().toISOString().split('T')[0]
       };
 
-      console.log('[SUBMIT] Données créées:', jobData);
-
-      // Valider les données
-      console.log('[SUBMIT] Validation des données...');
       const errors = validateJobData(jobData);
-      
       if (Object.keys(errors).length > 0) {
-        console.error('[SUBMIT] Erreurs de validation:', errors);
         setSubmitMessage({
           type: 'error',
           text: 'Erreurs de validation:\n' + Object.values(errors).join('\n')
@@ -266,41 +246,28 @@ const handleJobSubmit = async () => {
         return;
       }
 
-      console.log('[SUBMIT] Validation OK, sanitisation...');
-      
-      // Sanitiser les données
       const sanitizedData = sanitizeJobData(jobData);
+
+      // APPEL DIRECT SANS VERIFICATIONS COMPLEXES
+      if (editingJob) {
+        await jobService.updateJob(editingJob.id, sanitizedData);
+        setSubmitMessage({
+          type: 'success',
+          text: '✅ Mission mise à jour avec succès !'
+        });
+      } else {
+        await jobService.createJob(sanitizedData);
+        setSubmitMessage({
+          type: 'success',
+          text: '✅ Mission créée avec succès !'
+        });
+      }
       
-      console.log('[SUBMIT] Données sanitisées:', sanitizedData);
-      console.log('[SUBMIT] Appel de executeWithValidSession...');
-
-      // UTILISER executeWithValidSession POUR GÉRER LA SESSION
-      await executeWithValidSession(async () => {
-        console.log('[SUBMIT] Dans executeWithValidSession');
-        
-        if (editingJob) {
-          console.log('[SUBMIT] Mode édition, ID:', editingJob.id);
-          await jobService.updateJob(editingJob.id, sanitizedData);
-          setSubmitMessage({
-            type: 'success',
-            text: '✅ Mission mise à jour avec succès !'
-          });
-        } else {
-          console.log('[SUBMIT] Mode création');
-          await jobService.createJob(sanitizedData);
-          setSubmitMessage({
-            type: 'success',
-            text: '✅ Mission créée avec succès !'
-          });
-        }
-      });
-
-      // LOGS ET RECHARGEMENT
-      console.log('[SUBMIT] Opération réussie, rechargement des jobs...');
+      // Attendre et recharger
       await new Promise(resolve => setTimeout(resolve, 500));
-      await fetchJobs(true);
-
-      // RÉINITIALISER LE FORMULAIRE
+      await fetchJobs();
+      
+      // Réinitialiser
       setJobForm({
         title: '',
         company: '',
@@ -314,37 +281,21 @@ const handleJobSubmit = async () => {
         featured: false
       });
       setEditingJob(null);
-
-      // FERMER LA MODAL APRÈS 2 SECONDES
+      
       setTimeout(() => {
         setShowJobForm(false);
       }, 2000);
-
-    } catch (error) {
-      console.error('[SUBMIT] Erreur complète:', error);
-      console.error('[SUBMIT] Stack trace:', error.stack);
       
-      // GESTION SPÉCIFIQUE DES ERREURS DE SESSION
-      if (error.message?.includes('Session expirée') || error.message?.includes('JWT')) {
-        setSubmitMessage({
-          type: 'error',
-          text: '🔒 Session expirée. Veuillez vous reconnecter pour continuer.'
-        });
-        // Fermer la modal et réinitialiser
-        setTimeout(() => {
-          setShowJobForm(false);
-          setEditingJob(null);
-        }, 3000);
-      } else {
-        setSubmitMessage({
-          type: 'error',
-          text: '❌ ' + (error.message || 'Une erreur est survenue lors de la sauvegarde.')
-        });
-      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      setSubmitMessage({
+        type: 'error',
+        text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
+      });
     } finally {
       setIsSubmittingJob(false);
     }
-  };
+};
   
   // ✅ FONCTION AMÉLIORÉE AVEC GESTION DE SESSION
   const deleteJob = async (id) => {
