@@ -104,7 +104,9 @@ function JobBoardContent() {
     }
     
     try {
+      console.log('[FETCH] Début du chargement des jobs...');
       const jobsData = await fetchJobsHome(); // Limite à 6 missions pour l'accueil
+      console.log('[FETCH] Jobs chargés:', jobsData.length);
       setJobs(jobsData); // CORRIGÉ : utiliser jobsData au lieu de data
       setFilteredJobs(jobsData); // CORRIGÉ : utiliser jobsData au lieu de data
     } catch (error) {
@@ -218,10 +220,19 @@ function JobBoardContent() {
   };
 
   // ✅ FONCTION AMÉLIORÉE AVEC GESTION DE SESSION
-  const handleJobSubmit = async () => {
+const handleJobSubmit = async () => {
     // Réinitialiser les messages
     setSubmitMessage(null);
     setIsSubmittingJob(true);
+
+    // ✅ AJOUTER CE LOG ICI
+    console.log('[SUBMIT] Début de soumission:', {
+      isEditing: !!editingJob,
+      isAdmin,
+      isSupabaseConfigured,
+      sessionExpired,
+      timestamp: new Date().toISOString()
+    });
 
     try {
       const jobData = {
@@ -254,12 +265,28 @@ function JobBoardContent() {
 
       // ✅ UTILISER executeWithValidSession POUR GÉRER LA SESSION
       await executeWithValidSession(async () => {
-        if (editingJob) {
-          await jobService.updateJob(editingJob.id, sanitizedData);
-          setSubmitMessage({
+    if (editingJob) {
+        await jobService.updateJob(editingJob.id, sanitizedData);
+        setSubmitMessage({
             type: 'success',
             text: '✅ Mission mise à jour avec succès !'
-          });
+        });
+    } else {
+        await jobService.createJob(sanitizedData);
+        setSubmitMessage({
+            type: 'success',
+            text: '✅ Mission créée avec succès !'
+        });
+    }
+}); 
+      console.log('[SUBMIT] Opération réussie, rechargement des jobs...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await fetchJobs(true);
+
+// Réinitialiser le formulaire après succès
+setJobForm({
+    title: '',
+    company: '',
         } else {
           await jobService.createJob(sanitizedData);
           setSubmitMessage({
