@@ -216,10 +216,9 @@ export const jobService = {
     console.log('[jobService.createJob] Envoi de la requête Supabase...');
     const { data, error } = await supabase
       .from('jobs')
-      .insert([cleanData])
+      .insert([cleanData], { signal: controller.signal })
       .select()
-      .abortSignal(controller.signal);
-
+      
     clearTimeout(timeout);
 
     if (error) {
