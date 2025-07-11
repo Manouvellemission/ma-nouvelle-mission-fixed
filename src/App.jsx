@@ -6,7 +6,7 @@ import { useAuth } from './contexts/AuthContext';
 import { jobService } from './services/jobService';
 
 // Lazy loading des pages
-const MissionsPage = lazy(() => import('./components/MissionsPage'));
+const MissionsPage = lazy(() => import('./components/ui/MissionsPage'));
 const AboutPage = lazy(() => import('./components/ui/AboutPage'));
 
 // Context pour le thème
