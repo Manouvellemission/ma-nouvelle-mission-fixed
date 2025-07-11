@@ -992,8 +992,8 @@ const JobBoardContent = () => {
                 </div>
                 <div>
                   <h4 className="font-semibold mb-2">Téléphone</h4>
-                  <a href="tel:+33123456789" className="text-gray-300 hover:text-white transition-colors">
-                    +33 1 23 45 67 89
+                  <a href="tel:+33972328994" className="text-gray-300 hover:text-white transition-colors">
+                    +33 9 72 32 89 94
                   </a>
                 </div>
                 <div>
