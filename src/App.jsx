@@ -983,6 +983,18 @@ const JobBoardContent = () => {
                             </button>
                           </div>
                           
+                          {/* Test - Lien vers détails */}
+                          {job.slug && (
+                            <div className="mt-3 text-center">
+                              <a 
+                                href={`/mission/${job.slug}`}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                              >
+                                → Voir tous les détails
+                              </a>
+                            </div>
+                          )}
+                          
                           {isAdmin && (
                             <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                               <span className="text-sm text-gray-500 dark:text-gray-400">
