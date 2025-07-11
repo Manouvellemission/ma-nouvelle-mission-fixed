@@ -1622,6 +1622,45 @@ const App = () => {
                     </Suspense>
                   } 
                 />
+                <Routes>
+  <Route path="/" element={<JobBoardContent />} />
+  <Route 
+    path="/missions" 
+    element={
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      }>
+        <MissionsPage darkMode={darkMode} />
+      </Suspense>
+    } 
+  />
+  <Route 
+    path="/about" 
+    element={
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      }>
+        <AboutPage darkMode={darkMode} />
+      </Suspense>
+    } 
+  />
+  {/* NOUVELLE ROUTE DE TEST */}
+  <Route 
+    path="/mission/test" 
+    element={
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      }>
+        <MissionDetailPageTest darkMode={darkMode} />
+      </Suspense>
+    } 
+  />
               </Routes>
             </Router>
           </JobContext.Provider>
