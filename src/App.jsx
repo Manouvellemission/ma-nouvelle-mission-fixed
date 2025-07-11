@@ -1485,6 +1485,9 @@ const JobBoardContent = () => {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  )}
 
 // ==================== WRAPPER AVEC PROVIDERS ====================
 const App = () => {
