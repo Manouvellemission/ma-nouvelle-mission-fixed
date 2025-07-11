@@ -968,12 +968,12 @@ const JobBoardContent = () => {
                   </li>
                   <li>
                     <a 
-                      href="https://ma-nouvelle-mission.fr" 
+                      href="https://tjmfreelance.com/" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-gray-300 hover:text-white transition-colors flex items-center"
                     >
-                      Ma Nouvelle Mission
+                      Calcul TJM Freelance
                       <ExternalLink className="w-3 h-3 ml-1" />
                     </a>
                   </li>
