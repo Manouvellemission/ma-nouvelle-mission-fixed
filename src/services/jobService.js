@@ -160,6 +160,49 @@ export const jobService = {
     }
   },
 
+  // ✅ NOUVELLE FONCTION POUR LES OPTIMISATIONS
+  // Récupérer toutes les missions avec AbortController
+  async fetchJobsWithSignal(signal) {
+    // Vérifier le cache d'abord
+    if (jobsCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
+      console.log('Utilisation du cache pour les jobs (avec signal)');
+      return jobsCache;
+    }
+
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase non configuré, utilisation des données de fallback');
+      jobsCache = FALLBACK_JOBS;
+      cacheTimestamp = Date.now();
+      return FALLBACK_JOBS;
+    }
+
+    try {
+      // Utilisation du signal d'abort au lieu du timeout manuel
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .abortSignal(signal)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erreur Supabase (avec signal):', error);
+        return jobsCache || FALLBACK_JOBS;
+      }
+
+      // Mettre à jour le cache
+      jobsCache = data || FALLBACK_JOBS;
+      cacheTimestamp = Date.now();
+      
+      return jobsCache;
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error('La requête a pris trop de temps');
+      }
+      console.error('Erreur lors de la récupération des jobs (avec signal):', error);
+      return jobsCache || FALLBACK_JOBS;
+    }
+  },
+
   // Invalider le cache
   clearCache() {
     jobsCache = null;
@@ -524,3 +567,5 @@ export const fetchJobsPaginated = async (page = 1, limit = 12) => {
     };
   }
 };
+
+
