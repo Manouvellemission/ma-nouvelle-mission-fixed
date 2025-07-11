@@ -518,7 +518,44 @@ const JobBoardContent = () => {
   // Fonction pour postuler à une mission
   const handleApply = async (jobId) => {
     try {
+      // Créer FormData pour Netlify (supporte les fichiers)
+      const formData = new FormData();
+      
+      // Champs requis par Netlify
+      formData.append('form-name', 'job-application');
+      
+      // Données du candidat
+      formData.append('name', applicationForm.name);
+      formData.append('email', applicationForm.email);
+      formData.append('phone', applicationForm.phone || '');
+      formData.append('message', applicationForm.message || '');
+      
+      // Infos sur la mission
+      formData.append('jobTitle', selectedJob.title);
+      formData.append('company', selectedJob.company);
+      formData.append('location', selectedJob.location);
+      
+      // CV en pièce jointe
+      if (applicationForm.cv) {
+        formData.append('cv', applicationForm.cv);
+        console.log('CV ajouté:', applicationForm.cv.name, 'Taille:', applicationForm.cv.size);
+      }
+
+      console.log('Envoi du formulaire de candidature pour:', selectedJob.title);
+
+      // Envoyer à Netlify Forms
+      const netlifyResponse = await fetch('/', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!netlifyResponse.ok) {
+        throw new Error('Erreur lors de l\'envoi du formulaire');
+      }
+
+      // Mettre à jour le compteur de candidatures dans Supabase
       const result = await jobService.incrementApplicants(jobId);
+      
       if (result.success) {
         dispatch({ 
           type: 'UPDATE_JOB', 
@@ -527,19 +564,26 @@ const JobBoardContent = () => {
             applicants: result.newCount 
           } 
         });
+        
+        setSubmitMessage({
+          type: 'success',
+          text: '✅ Candidature envoyée avec succès !'
+        });
+        
+        // Fermer le modal et réinitialiser le formulaire
+        setShowApplicationForm(false);
+        setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+      } else {
+        // Si Netlify a réussi mais pas Supabase, on affiche quand même un succès
         setSubmitMessage({
           type: 'success',
           text: '✅ Candidature envoyée avec succès !'
         });
         setShowApplicationForm(false);
         setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
-      } else {
-        setSubmitMessage({
-          type: 'error',
-          text: '❌ ' + result.message
-        });
       }
     } catch (error) {
+      console.error('Erreur lors de l\'envoi:', error);
       setSubmitMessage({
         type: 'error',
         text: '❌ Erreur lors de l\'envoi de la candidature'
@@ -1553,4 +1597,4 @@ const App = () => {
   );
 };
 
-export default App;          
+export default App;
