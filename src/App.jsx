@@ -1452,7 +1452,7 @@ const JobBoardContent = () => {
                           ✓ {applicationForm.cv.name}
                         </p>
                       )}
-                      </div>
+                     </div>
                     </div>
                   </div>
                 </form>
@@ -1481,14 +1481,10 @@ const JobBoardContent = () => {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
-      </div>
-    </div>
-  );
-};
 
 // ==================== WRAPPER AVEC PROVIDERS ====================
 const App = () => {
