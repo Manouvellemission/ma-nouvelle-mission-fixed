@@ -1484,7 +1484,7 @@ const JobBoardContent = () => {
               </div>
             </div>
           </div>
-        )}
+              )}
       </div>
     </div>
   );
