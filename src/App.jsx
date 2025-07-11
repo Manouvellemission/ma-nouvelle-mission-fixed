@@ -1109,8 +1109,9 @@ const JobBoardContent = () => {
 
         {/* Modal de formulaire de mission */}
         {showJobForm && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-4xl my-8">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {editingJob ? 'Modifier la mission' : 'Nouvelle mission'}
@@ -1334,34 +1335,38 @@ const JobBoardContent = () => {
 
         {/* Modal de candidature AVEC CV */}
         {showApplicationForm && selectedJob && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-2xl my-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Postuler à cette mission
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowApplicationForm(false);
-                    setSelectedJob(null);
-                    setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
-                  }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl my-8 max-h-[90vh] overflow-hidden flex flex-col">
+                {/* Header fixe */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Postuler à cette mission
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowApplicationForm(false);
+                      setSelectedJob(null);
+                      setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+                    }}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
 
-              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                  {selectedJob.title}
-                </h3>
-                <p className="text-blue-700 dark:text-blue-400 text-sm">
-                  {selectedJob.company} • {selectedJob.location}
-                </p>
-              </div>
-              
-              <form className="space-y-6">
+                {/* Contenu scrollable */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
+                      {selectedJob.title}
+                    </h3>
+                    <p className="text-blue-700 dark:text-blue-400 text-sm">
+                      {selectedJob.company} • {selectedJob.location}
+                    </p>
+                  </div>
+                  
+                  <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1447,11 +1452,14 @@ const JobBoardContent = () => {
                           ✓ {applicationForm.cv.name}
                         </p>
                       )}
+                      </div>
                     </div>
-                  </div>
+                  </form>
                 </div>
-                
-                <div className="flex justify-end space-x-4 pt-6">
+
+                {/* Footer avec boutons fixe */}
+                <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex justify-end space-x-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -1543,4 +1551,3 @@ const App = () => {
 };
 
 export default App;
-
