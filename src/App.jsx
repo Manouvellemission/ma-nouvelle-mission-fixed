@@ -1,4 +1,4 @@
-    // src/App.jsx - Application principale Ma Nouvelle Mission (VERSION CORRIGÉE)
+// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION CORRIGÉE)
 import React, { useState, useEffect, useCallback, useMemo, Suspense, useReducer, createContext, useContext, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, ExternalLink, Mail, Phone, Upload } from 'lucide-react';
@@ -1111,224 +1111,225 @@ const JobBoardContent = () => {
         {showJobForm && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {editingJob ? 'Modifier la mission' : 'Nouvelle mission'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowJobForm(false);
-                    setEditingJob(null);
-                    resetFormState();
-                  }}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              {/* Barre de progression */}
-              {isSubmitting && (
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      {editingJob ? 'Mise à jour en cours...' : 'Création en cours...'}
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      {progress}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-              
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Titre de la mission *
-                    </label>
-                    <input
-                      type="text"
-                      value={jobForm.title}
-                      onChange={(e) => setJobForm({...jobForm, title: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Entreprise *
-                    </label>
-                    <input
-                      type="text"
-                      value={jobForm.company}
-                      onChange={(e) => setJobForm({...jobForm, company: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Localisation *
-                    </label>
-                    <input
-                      type="text"
-                      value={jobForm.location}
-                      onChange={(e) => setJobForm({...jobForm, location: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Type de contrat
-                    </label>
-                    <select
-                      value={jobForm.type}
-                      onChange={(e) => setJobForm({...jobForm, type: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      disabled={isSubmitting}
-                    >
-                      <option value="Mission">Mission</option>
-                      <option value="CDI">CDI</option>
-                      <option value="CDD">CDD</option>
-                      <option value="Freelance">Freelance</option>
-                      <option value="Stage">Stage</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Salaire *
-                    </label>
-                    <input
-                      type="text"
-                      value={jobForm.salary}
-                      onChange={(e) => setJobForm({...jobForm, salary: e.target.value})}
-                      placeholder="ex: 600 ou 45K-55K"
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Type de salaire
-                    </label>
-                    <select
-                      value={jobForm.salaryType}
-                      onChange={(e) => setJobForm({...jobForm, salaryType: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      disabled={isSubmitting}
-                    >
-                      <option value="TJM">TJM</option>
-                      <option value="Annuel">Annuel</option>
-                      <option value="Mensuel">Mensuel</option>
-                      <option value="Horaire">Horaire</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Description *
-                  </label>
-                  <textarea
-                    value={jobForm.description}
-                    onChange={(e) => setJobForm({...jobForm, description: e.target.value})}
-                    rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    required
-                    disabled={isSubmitting}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Exigences (une par ligne)
-                  </label>
-                  <textarea
-                    value={jobForm.requirements}
-                    onChange={(e) => setJobForm({...jobForm, requirements: e.target.value})}
-                    rows={4}
-                    placeholder="ex: 5+ années d'expérience&#10;Maîtrise de React&#10;Connaissance de Node.js"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Avantages (un par ligne)
-                  </label>
-                  <textarea
-                    value={jobForm.benefits}
-                    onChange={(e) => setJobForm({...jobForm, benefits: e.target.value})}
-                    rows={4}
-                    placeholder="ex: Télétravail partiel&#10;Mutuelle d'entreprise&#10;Formation continue"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="featured"
-                    checked={jobForm.featured}
-                    onChange={(e) => setJobForm({...jobForm, featured: e.target.checked})}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                    disabled={isSubmitting}
-                  />
-                  <label htmlFor="featured" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Mission en vedette
-                  </label>
-                </div>
-                
-                <div className="flex justify-end space-x-4 pt-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl my-8 p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {editingJob ? 'Modifier la mission' : 'Nouvelle mission'}
+                  </h2>
                   <button
-                    type="button"
                     onClick={() => {
                       setShowJobForm(false);
                       setEditingJob(null);
                       resetFormState();
                     }}
-                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    disabled={isSubmitting}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    Annuler
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleJobSubmit}
-                    disabled={isSubmitting}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {editingJob ? 'Mise à jour...' : 'Publication...'}
-                      </>
-                    ) : (
-                      editingJob ? 'Mettre à jour' : 'Publier la mission'
-                    )}
+                    <X className="w-6 h-6" />
                   </button>
                 </div>
-              </form>
+
+                {/* Barre de progression */}
+                {isSubmitting && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {editingJob ? 'Mise à jour en cours...' : 'Création en cours...'}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {progress}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+                
+                <form className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Titre de la mission *
+                      </label>
+                      <input
+                        type="text"
+                        value={jobForm.title}
+                        onChange={(e) => setJobForm({...jobForm, title: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Entreprise *
+                      </label>
+                      <input
+                        type="text"
+                        value={jobForm.company}
+                        onChange={(e) => setJobForm({...jobForm, company: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Localisation *
+                      </label>
+                      <input
+                        type="text"
+                        value={jobForm.location}
+                        onChange={(e) => setJobForm({...jobForm, location: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Type de contrat
+                      </label>
+                      <select
+                        value={jobForm.type}
+                        onChange={(e) => setJobForm({...jobForm, type: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        disabled={isSubmitting}
+                      >
+                        <option value="Mission">Mission</option>
+                        <option value="CDI">CDI</option>
+                        <option value="CDD">CDD</option>
+                        <option value="Freelance">Freelance</option>
+                        <option value="Stage">Stage</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Salaire *
+                      </label>
+                      <input
+                        type="text"
+                        value={jobForm.salary}
+                        onChange={(e) => setJobForm({...jobForm, salary: e.target.value})}
+                        placeholder="ex: 600 ou 45K-55K"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        required
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Type de salaire
+                      </label>
+                      <select
+                        value={jobForm.salaryType}
+                        onChange={(e) => setJobForm({...jobForm, salaryType: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        disabled={isSubmitting}
+                      >
+                        <option value="TJM">TJM</option>
+                        <option value="Annuel">Annuel</option>
+                        <option value="Mensuel">Mensuel</option>
+                        <option value="Horaire">Horaire</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Description *
+                    </label>
+                    <textarea
+                      value={jobForm.description}
+                      onChange={(e) => setJobForm({...jobForm, description: e.target.value})}
+                      rows={6}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Exigences (une par ligne)
+                    </label>
+                    <textarea
+                      value={jobForm.requirements}
+                      onChange={(e) => setJobForm({...jobForm, requirements: e.target.value})}
+                      rows={4}
+                      placeholder="ex: 5+ années d'expérience&#10;Maîtrise de React&#10;Connaissance de Node.js"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Avantages (un par ligne)
+                    </label>
+                    <textarea
+                      value={jobForm.benefits}
+                      onChange={(e) => setJobForm({...jobForm, benefits: e.target.value})}
+                      rows={4}
+                      placeholder="ex: Télétravail partiel&#10;Mutuelle d'entreprise&#10;Formation continue"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="featured"
+                      checked={jobForm.featured}
+                      onChange={(e) => setJobForm({...jobForm, featured: e.target.checked})}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                      disabled={isSubmitting}
+                    />
+                    <label htmlFor="featured" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Mission en vedette
+                    </label>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-4 pt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowJobForm(false);
+                        setEditingJob(null);
+                        resetFormState();
+                      }}
+                      className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      disabled={isSubmitting}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleJobSubmit}
+                      disabled={isSubmitting}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {editingJob ? 'Mise à jour...' : 'Publication...'}
+                        </>
+                      ) : (
+                        editingJob ? 'Mettre à jour' : 'Publier la mission'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
@@ -1367,128 +1368,129 @@ const JobBoardContent = () => {
                   </div>
                   
                   <form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Nom complet *
-                    </label>
-                    <input
-                      type="text"
-                      value={applicationForm.name}
-                      onChange={(e) => setApplicationForm({...applicationForm, name: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      value={applicationForm.email}
-                      onChange={(e) => setApplicationForm({...applicationForm, email: e.target.value})}
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Téléphone
-                  </label>
-                  <input
-                    type="tel"
-                    value={applicationForm.phone}
-                    onChange={(e) => setApplicationForm({...applicationForm, phone: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Message de motivation
-                  </label>
-                  <textarea
-                    value={applicationForm.message}
-                    onChange={(e) => setApplicationForm({...applicationForm, message: e.target.value})}
-                    rows={4}
-                    placeholder="Expliquez pourquoi vous êtes intéressé(e) par cette mission..."
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    CV (PDF uniquement, max 10MB)
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
-                    <div className="space-y-1 text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                        <label
-                          htmlFor="cv-upload"
-                          className="relative cursor-pointer rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                        >
-                          <span>Télécharger un fichier</span>
-                          <input
-                            id="cv-upload"
-                            name="cv-upload"
-                            type="file"
-                            accept=".pdf"
-                            className="sr-only"
-                            onChange={(e) => setApplicationForm({...applicationForm, cv: e.target.files[0]})}
-                          />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Nom complet *
                         </label>
-                        <p className="pl-1">ou glisser-déposer</p>
+                        <input
+                          type="text"
+                          value={applicationForm.name}
+                          onChange={(e) => setApplicationForm({...applicationForm, name: e.target.value})}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          required
+                        />
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        PDF jusqu'à 10MB
-                      </p>
-                      {applicationForm.cv && (
-                        <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                          ✓ {applicationForm.cv.name}
-                        </p>
-                      )}
-                     </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={applicationForm.email}
+                          onChange={(e) => setApplicationForm({...applicationForm, email: e.target.value})}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
-                </form>
-              </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Téléphone
+                      </label>
+                      <input
+                        type="tel"
+                        value={applicationForm.phone}
+                        onChange={(e) => setApplicationForm({...applicationForm, phone: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Message de motivation
+                      </label>
+                      <textarea
+                        value={applicationForm.message}
+                        onChange={(e) => setApplicationForm({...applicationForm, message: e.target.value})}
+                        rows={4}
+                        placeholder="Expliquez pourquoi vous êtes intéressé(e) par cette mission..."
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        CV (PDF uniquement, max 10MB)
+                      </label>
+                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                        <div className="space-y-1 text-center">
+                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                          <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                            <label
+                              htmlFor="cv-upload"
+                              className="relative cursor-pointer rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                            >
+                              <span>Télécharger un fichier</span>
+                              <input
+                                id="cv-upload"
+                                name="cv-upload"
+                                type="file"
+                                accept=".pdf"
+                                className="sr-only"
+                                onChange={(e) => setApplicationForm({...applicationForm, cv: e.target.files[0]})}
+                              />
+                            </label>
+                            <p className="pl-1">ou glisser-déposer</p>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            PDF jusqu'à 10MB
+                          </p>
+                          {applicationForm.cv && (
+                            <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                              ✓ {applicationForm.cv.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
 
-              {/* Footer avec boutons fixe */}
-              <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
-                <div className="flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowApplicationForm(false);
-                      setSelectedJob(null);
-                      setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
-                    }}
-                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleApply(selectedJob.id)}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-                  >
-                    Envoyer ma candidature
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </button>
+                {/* Footer avec boutons fixe */}
+                <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowApplicationForm(false);
+                        setSelectedJob(null);
+                        setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+                      }}
+                      className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleApply(selectedJob.id)}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                    >
+                      Envoyer ma candidature
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
+      </div>
     </div>
- </div>
-);
-};         
+  );
+};
 
 // ==================== WRAPPER AVEC PROVIDERS ====================
 const App = () => {
@@ -1550,6 +1552,5 @@ const App = () => {
     </ErrorBoundary>
   );
 };
-            
-export default App;
-            
+
+export default App;          
