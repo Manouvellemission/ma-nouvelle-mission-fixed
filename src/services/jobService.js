@@ -208,46 +208,42 @@ export const jobService = {
   if (existingSlug && existingSlug.length > 0) {
     throw new Error('Une mission avec ce titre (slug) existe déjà.');
   }
-
+   
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
-    console.log('[jobService.createJob] Envoi de la requête Supabase...');
-    const { data, error } = await supabase
-      .from('jobs')
-      .insert([cleanData], { signal: controller.signal })
-      .select()
-      
-    clearTimeout(timeout);
+  console.log('[jobService.createJob] 🟡 Envoi de la requête Supabase...');
+  
+  const { data, error } = await supabase
+    .from('jobs')
+    .insert([cleanData], { signal: controller.signal })
+    .select();
 
-    if (error) {
-      console.error('[jobService.createJob] Erreur Supabase:', error);
-      if (error.code === '23505') {
-        throw new Error('Duplicata : une mission identique existe déjà');
-      } else if (error.code === '23502') {
-        throw new Error('Champs obligatoires manquants');
-      } else if (error.message?.includes('JWT')) {
-        throw new Error('Session expirée. Veuillez vous reconnecter');
-      }
-      throw new Error(error.message || 'Erreur inconnue lors de la création');
-    }
+  clearTimeout(timeout);
 
-    if (!data || data.length === 0) {
-      throw new Error('Aucune donnée retournée après insertion');
-    }
+  console.log('[jobService.createJob] 🟢 Réponse Supabase reçue:', { data, error });
 
-    this.clearCache();
-    console.log('[jobService.createJob] Mission créée avec succès');
-    return { success: true, data: data[0] };
-
-  } catch (error) {
-    console.error('[jobService.createJob] Erreur finale:', error);
-    if (error.name === 'AbortError') {
-      throw new Error('La requête Supabase a été annulée (délai dépassé)');
-    }
-    throw error;
+  if (error) {
+    console.error('[jobService.createJob] 🔴 Erreur Supabase:', error);
+    throw new Error(error.message || 'Erreur inconnue Supabase');
   }
+
+  if (!data || data.length === 0) {
+    throw new Error('Aucune donnée retournée après insertion');
+  }
+
+  this.clearCache();
+  console.log('[jobService.createJob] ✅ Mission créée avec succès');
+  return { success: true, data: data[0] };
+
+} catch (error) {
+  console.error('[jobService.createJob] ❌ Erreur finale:', error);
+  if (error.name === 'AbortError') {
+    throw new Error('⏱ La requête Supabase a été annulée (délai dépassé)');
+  }
+  throw error;
+}
 },
 
   // Mettre à jour une mission
