@@ -1454,12 +1454,13 @@ const JobBoardContent = () => {
                       )}
                       </div>
                     </div>
-                  </form>
-                </div>
+                  </div>
+                </form>
+              </div>
 
-                {/* Footer avec boutons fixe */}
-                <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
-                  <div className="flex justify-end space-x-4">
+              {/* Footer avec boutons fixe */}
+              <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex justify-end space-x-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -1551,3 +1552,4 @@ const App = () => {
 };
 
 export default App;
+            
