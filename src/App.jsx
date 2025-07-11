@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense, useReducer, createContext, useContext, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, ExternalLink, Mail, Phone } from 'lucide-react';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth, AuthProvider } from './contexts/AuthContext';
 import { jobService } from './services/jobService';
 import './App.css';
 
@@ -1428,6 +1428,7 @@ const App = () => {
 
   return (
     <ErrorBoundary>
+       <AuthProvider>
       <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
         <JobContext.Provider value={jobsData}>
           <Router>
@@ -1461,6 +1462,7 @@ const App = () => {
           </Router>
         </JobContext.Provider>
       </ThemeContext.Provider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 };
