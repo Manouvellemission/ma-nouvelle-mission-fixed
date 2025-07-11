@@ -1,7 +1,7 @@
-// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION FINALE COMPLÈTE)
+// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION CORRIGÉE)
 import React, { useState, useEffect, useCallback, useMemo, Suspense, useReducer, createContext, useContext, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, ExternalLink, Mail, Phone } from 'lucide-react';
+import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, ExternalLink, Mail, Phone, Upload } from 'lucide-react';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
 import { jobService } from './services/jobService';
 import './App.css';
@@ -199,6 +199,103 @@ const generateSlug = (title, location) => {
     .replace(/(^-|-$)/g, '');
 };
 
+// ==================== COMPOSANT ADMIN LOGIN MODAL ====================
+const AdminLoginModal = ({ onClose, darkMode }) => {
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        setError(error.message);
+      } else {
+        onClose();
+      }
+    } catch (err) {
+      setError('Erreur lors de la connexion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 w-full max-w-md`}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            Connexion Admin
+          </h2>
+          <button
+            onClick={onClose}
+            className={`text-gray-400 hover:text-gray-600 ${darkMode ? 'dark:hover:text-gray-300' : ''}`}
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        {error && (
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                darkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300'
+              }`}
+              required
+            />
+          </div>
+          
+          <div>
+            <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+              Mot de passe
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                darkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300'
+              }`}
+              required
+            />
+          </div>
+          
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+          >
+            {loading ? 'Connexion...' : 'Se connecter'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 // ==================== COMPOSANT PRINCIPAL ====================
 
 const JobBoardContent = () => {
@@ -235,11 +332,6 @@ const JobBoardContent = () => {
     requirements: '',
     benefits: '',
     featured: false
-  });
-
-  const [adminForm, setAdminForm] = useState({
-    email: '',
-    password: ''
   });
 
   const [applicationForm, setApplicationForm] = useState({
@@ -421,13 +513,6 @@ const JobBoardContent = () => {
     clearSessionExpired();
     setSubmitMessage(null);
     setShowAdminLogin(true);
-  };
-
-  // Fonction pour gérer la connexion admin
-  const handleAdminLogin = async (e) => {
-    e.preventDefault();
-    // Logique de connexion admin ici
-    setShowAdminLogin(false);
   };
 
   // Fonction pour postuler à une mission
@@ -1016,56 +1101,10 @@ const JobBoardContent = () => {
         
         {/* Modal de connexion admin */}
         {showAdminLogin && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-md">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Connexion Admin
-                </h2>
-                <button
-                  onClick={() => setShowAdminLogin(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <form onSubmit={handleAdminLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={adminForm.email}
-                    onChange={(e) => setAdminForm({...adminForm, email: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Mot de passe
-                  </label>
-                  <input
-                    type="password"
-                    value={adminForm.password}
-                    onChange={(e) => setAdminForm({...adminForm, password: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-                
-                <button
-                  type="submit"
-                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Se connecter
-                </button>
-              </form>
-            </div>
-          </div>
+          <AdminLoginModal
+            onClose={() => setShowAdminLogin(false)}
+            darkMode={darkMode}
+          />
         )}
 
         {/* Modal de formulaire de mission */}
@@ -1293,7 +1332,7 @@ const JobBoardContent = () => {
           </div>
         )}
 
-        {/* Modal de candidature */}
+        {/* Modal de candidature AVEC CV */}
         {showApplicationForm && selectedJob && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-2xl my-8">
@@ -1376,6 +1415,42 @@ const JobBoardContent = () => {
                   />
                 </div>
                 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    CV (PDF uniquement, max 10MB)
+                  </label>
+                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                    <div className="space-y-1 text-center">
+                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                      <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                        <label
+                          htmlFor="cv-upload"
+                          className="relative cursor-pointer rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                        >
+                          <span>Télécharger un fichier</span>
+                          <input
+                            id="cv-upload"
+                            name="cv-upload"
+                            type="file"
+                            accept=".pdf"
+                            className="sr-only"
+                            onChange={(e) => setApplicationForm({...applicationForm, cv: e.target.files[0]})}
+                          />
+                        </label>
+                        <p className="pl-1">ou glisser-déposer</p>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        PDF jusqu'à 10MB
+                      </p>
+                      {applicationForm.cv && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                          ✓ {applicationForm.cv.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="flex justify-end space-x-4 pt-6">
                   <button
                     type="button"
@@ -1406,7 +1481,7 @@ const JobBoardContent = () => {
   );
 };
 
-// Wrapper avec les providers
+// ==================== WRAPPER AVEC PROVIDERS ====================
 const App = () => {
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -1428,40 +1503,40 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-       <AuthProvider>
-      <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
-        <JobContext.Provider value={jobsData}>
-          <Router>
-            <Routes>
-              <Route path="/" element={<JobBoardContent />} />
-              <Route 
-                path="/missions" 
-                element={
-                  <Suspense fallback={
-                    <div className="min-h-screen flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    </div>
-                  }>
-                    <MissionsPage />
-                  </Suspense>
-                } 
-              />
-              <Route 
-                path="/about" 
-                element={
-                  <Suspense fallback={
-                    <div className="min-h-screen flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    </div>
-                  }>
-                    <AboutPage />
-                  </Suspense>
-                } 
-              />
-            </Routes>
-          </Router>
-        </JobContext.Provider>
-      </ThemeContext.Provider>
+      <AuthProvider>
+        <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
+          <JobContext.Provider value={jobsData}>
+            <Router>
+              <Routes>
+                <Route path="/" element={<JobBoardContent />} />
+                <Route 
+                  path="/missions" 
+                  element={
+                    <Suspense fallback={
+                      <div className="min-h-screen flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                      </div>
+                    }>
+                      <MissionsPage darkMode={darkMode} />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/about" 
+                  element={
+                    <Suspense fallback={
+                      <div className="min-h-screen flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                      </div>
+                    }>
+                      <AboutPage darkMode={darkMode} />
+                    </Suspense>
+                  } 
+                />
+              </Routes>
+            </Router>
+          </JobContext.Provider>
+        </ThemeContext.Provider>
       </AuthProvider>
     </ErrorBoundary>
   );
