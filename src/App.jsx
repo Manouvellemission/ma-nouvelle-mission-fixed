@@ -832,11 +832,11 @@ const JobBoardContent = () => {
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
                   <div className="text-center">
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in">
-                      Freelance Trouvez votre
-                      <span className="block text-yellow-300">nouvelle mission</span>
+                      Freelance
+                      <span className="block text-yellow-300">Trouvez votre nouvelle mission</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto animate-fade-in animation-delay-200">
-                      Découvrez les meilleures opportunités professionnelles et donnez un nouvel élan à votre carrière
+                      Le jobboard pensé pour les freelances : des missions, pour des freelances
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in animation-delay-400">
                       <Link
@@ -873,7 +873,7 @@ const JobBoardContent = () => {
                       <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Building className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                       </div>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">200+</div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">20+</div>
                       <div className="text-gray-600 dark:text-gray-300">Entreprises partenaires</div>
                     </div>
                     <div className="text-center animate-fade-in animation-delay-400">
@@ -895,7 +895,7 @@ const JobBoardContent = () => {
                       Missions en vedette
                     </h2>
                     <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                      Découvrez une sélection de nos meilleures opportunités professionnelles
+                      Découvrez nos missions disponibles
                     </p>
                   </div>
 
@@ -1045,8 +1045,8 @@ const JobBoardContent = () => {
                   <span className="text-2xl font-bold">Ma Nouvelle Mission</span>
                 </div>
                 <p className="text-gray-300 mb-6 leading-relaxed">
-                  La plateforme de référence pour connecter les talents avec les meilleures 
-                  opportunités professionnelles. Propulsé par Get in Talent.
+                  La plateforme de référence pour connecter les freelances avec les meilleures 
+                  missions.
                 </p>
                 <div className="flex space-x-4">
                   <a href="mailto:hello@getintalent.fr" className="text-gray-400 hover:text-white transition-colors">
