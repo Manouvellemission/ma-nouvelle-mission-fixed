@@ -1,57 +1,46 @@
-// src/App.jsx - Version OPTIMISÉE avec toutes les améliorations ET fonction handleJobSubmit corrigée
-import React, { useState, useEffect, useCallback, useMemo, useReducer, lazy, Suspense, createContext, useContext } from 'react';
-import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, Clock } from 'lucide-react';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION FINALE COMPLÈTE)
+import React, { useState, useEffect, useCallback, useMemo, Suspense, useReducer, createContext, useContext, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, ExternalLink, Mail, Phone } from 'lucide-react';
+import { useAuth } from './contexts/AuthContext';
 import { jobService } from './services/jobService';
-import LoadingSpinner from './components/ui/LoadingSpinner';
-import SkeletonLoader from './components/ui/SkeletonLoader';
-import './App.css';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 // Lazy loading des pages
-const MissionsPage = lazy(() => import('./components/ui/MissionsPage'));
+const MissionsPage = lazy(() => import('./components/MissionsPage'));
 const AboutPage = lazy(() => import('./components/ui/AboutPage'));
 
-// ==================== CONTEXTES ====================
 // Context pour le thème
 const ThemeContext = createContext();
-export const useTheme = () => useContext(ThemeContext);
+const useTheme = () => useContext(ThemeContext);
 
 // Context pour les jobs
 const JobContext = createContext();
-export const useJobs = () => useContext(JobContext);
+const useJobs = () => useContext(JobContext);
 
 // ==================== REDUCERS ====================
+
+// Reducer pour la gestion des jobs
 const jobReducer = (state, action) => {
   switch (action.type) {
     case 'SET_JOBS':
-      return { ...state, jobs: action.payload, filteredJobs: action.payload };
-    case 'SET_FILTERED_JOBS':
-      return { ...state, filteredJobs: action.payload };
+      return { ...state, jobs: action.payload, loading: false, error: null };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
     case 'SET_ERROR':
-      return { ...state, error: action.payload };
+      return { ...state, error: action.payload, loading: false };
     case 'ADD_JOB':
-      return { 
-        ...state, 
-        jobs: [...state.jobs, action.payload],
-        filteredJobs: [...state.filteredJobs, action.payload]
-      };
+      return { ...state, jobs: [action.payload, ...state.jobs] };
     case 'UPDATE_JOB':
-      const updatedJobs = state.jobs.map(job => 
-        job.id === action.payload.id ? action.payload : job
-      );
       return {
         ...state,
-        jobs: updatedJobs,
-        filteredJobs: updatedJobs
+        jobs: state.jobs.map(job => 
+          job.id === action.payload.id ? action.payload : job
+        )
       };
     case 'DELETE_JOB':
       return {
         ...state,
-        jobs: state.jobs.filter(job => job.id !== action.payload),
-        filteredJobs: state.filteredJobs.filter(job => job.id !== action.payload)
+        jobs: state.jobs.filter(job => job.id !== action.payload)
       };
     default:
       return state;
@@ -59,50 +48,182 @@ const jobReducer = (state, action) => {
 };
 
 // ==================== CUSTOM HOOKS ====================
-// Hook personnalisé pour la gestion des jobs avec timeout
+
+// Hook pour la gestion des données jobs avec timeout et AbortController
 const useJobsData = () => {
   const [state, dispatch] = useReducer(jobReducer, {
     jobs: [],
-    filteredJobs: [],
     loading: true,
     error: null
   });
 
-  const fetchJobsWithTimeout = useCallback(async (showLoading = true) => {
-    if (showLoading) {
-      dispatch({ type: 'SET_LOADING', payload: true });
-    }
-
+  const fetchJobs = useCallback(async () => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
     try {
-      const response = await jobService.fetchJobsWithSignal(controller.signal);
+      // Utiliser fetchJobsWithSignal si disponible, sinon fallback
+      let data;
+      if (jobService.fetchJobsWithSignal) {
+        data = await jobService.fetchJobsWithSignal(controller.signal);
+      } else {
+        data = await jobService.fetchJobs();
+      }
+      
       clearTimeout(timeoutId);
-      dispatch({ type: 'SET_JOBS', payload: response });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({ type: 'SET_JOBS', payload: data });
     } catch (error) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
-        dispatch({ type: 'SET_ERROR', payload: 'La requête a pris trop de temps' });
+        dispatch({ type: 'SET_ERROR', payload: 'Délai d\'attente dépassé' });
       } else {
         dispatch({ type: 'SET_ERROR', payload: error.message });
       }
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
     }
   }, []);
 
-  return {
-    ...state,
-    dispatch,
-    fetchJobs: fetchJobsWithTimeout
-  };
+  return { ...state, fetchJobs, dispatch };
 };
 
 // Hook pour le formulaire avec timeout et progress
-const useJobForm = (initialState = {}) => {
-  const [form, setForm] = useState({
+const useJobForm = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const submitWithProgress = useCallback(async (submitFunction) => {
+    setIsSubmitting(true);
+    setProgress(0);
+
+    const progressInterval = setInterval(() => {
+      setProgress(prev => Math.min(prev + 10, 90));
+    }, 200);
+
+    try {
+      const result = await submitFunction();
+      setProgress(100);
+      clearInterval(progressInterval);
+      
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setProgress(0);
+      }, 500);
+      
+      return result;
+    } catch (error) {
+      clearInterval(progressInterval);
+      setIsSubmitting(false);
+      setProgress(0);
+      throw error;
+    }
+  }, []);
+
+  return { isSubmitting, progress, submitWithProgress };
+};
+
+// ==================== ERROR BOUNDARY ====================
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error Boundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center p-8">
+            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Oups ! Une erreur s'est produite
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Nous nous excusons pour ce désagrément. Veuillez rafraîchir la page.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Rafraîchir la page
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ==================== VALIDATION & SANITISATION ====================
+
+const validateJobData = (data) => {
+  const errors = {};
+  
+  if (!data.title?.trim()) errors.title = 'Le titre est requis';
+  if (!data.company?.trim()) errors.company = 'L\'entreprise est requise';
+  if (!data.location?.trim()) errors.location = 'La localisation est requise';
+  if (!data.description?.trim()) errors.description = 'La description est requise';
+  if (!data.salary?.trim()) errors.salary = 'Le salaire est requis';
+  
+  return errors;
+};
+
+const sanitizeJobData = (data) => {
+  return {
+    ...data,
+    title: data.title?.trim(),
+    company: data.company?.trim(),
+    location: data.location?.trim(),
+    description: data.description?.trim(),
+    requirements: Array.isArray(data.requirements) ? data.requirements : [],
+    benefits: Array.isArray(data.benefits) ? data.benefits : []
+  };
+};
+
+const generateSlug = (title, location) => {
+  return `${title}-${location}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
+// ==================== COMPOSANT PRINCIPAL ====================
+
+const JobBoardContent = () => {
+  const { isAdmin, signOut, isSupabaseConfigured, executeWithValidSession, sessionExpired, clearSessionExpired } = useAuth();
+  const { darkMode, toggleDarkMode } = useTheme();
+  const { jobs, loading, error, fetchJobs, dispatch } = useJobs();
+  const { isSubmitting, progress, submitWithProgress } = useJobForm();
+  
+  // États UI
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+
+  // États pour le feedback utilisateur
+  const [submitMessage, setSubmitMessage] = useState(null);
+  const [isDeletingJob, setIsDeletingJob] = useState(null);
+
+  // États pour les formulaires
+  const [jobForm, setJobForm] = useState({
     title: '',
     company: '',
     location: '',
@@ -112,16 +233,56 @@ const useJobForm = (initialState = {}) => {
     description: '',
     requirements: '',
     benefits: '',
-    featured: false,
-    ...initialState
+    featured: false
   });
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitProgress, setSubmitProgress] = useState('');
-  const [submitMessage, setSubmitMessage] = useState(null);
 
-  const resetForm = useCallback(() => {
-    setForm({
+  const [adminForm, setAdminForm] = useState({
+    email: '',
+    password: ''
+  });
+
+  const [applicationForm, setApplicationForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+    cv: null
+  });
+
+  // Utilisation du hook de formulaire
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Effet pour masquer les messages après 5 secondes
+  useEffect(() => {
+    if (submitMessage) {
+      const timer = setTimeout(() => {
+        setSubmitMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitMessage]);
+
+  // Gestion de la session expirée
+  useEffect(() => {
+    if (sessionExpired) {
+      setSubmitMessage({
+        type: 'error',
+        text: '🔒 Session expirée. Veuillez vous reconnecter pour continuer.'
+      });
+      setShowJobForm(false);
+      setEditingJob(null);
+    }
+  }, [sessionExpired]);
+
+  // Charger les jobs au démarrage
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  // Fonction pour réinitialiser le formulaire
+  const resetFormState = useCallback(() => {
+    setJobForm({
       title: '',
       company: '',
       location: '',
@@ -133,293 +294,93 @@ const useJobForm = (initialState = {}) => {
       benefits: '',
       featured: false
     });
-    setSubmitProgress('');
-    setSubmitMessage(null);
+    setEditingJob(null);
   }, []);
 
-  const updateForm = useCallback((updates) => {
-    setForm(prev => ({ ...prev, ...updates }));
-  }, []);
-
-  return {
-    form,
-    setForm,
-    updateForm,
-    resetForm,
-    isSubmitting,
-    setIsSubmitting,
-    submitProgress,
-    setSubmitProgress,
-    submitMessage,
-    setSubmitMessage
-  };
-};
-
-// ==================== ERROR BOUNDARY ====================
-class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
-  
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  
-  componentDidCatch(error, errorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-  }
-  
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center p-8">
-            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Oups, une erreur s'est produite</h1>
-            <p className="text-gray-600 mb-4">Nous nous excusons pour ce désagrément.</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Rafraîchir la page
-            </button>
-          </div>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-// ==================== VALIDATION & SANITISATION ====================
-const validateJobData = (jobData) => {
-  const errors = {};
-
-  if (!jobData.title || jobData.title.trim().length < 3) {
-    errors.title = "Le titre doit contenir au moins 3 caractères";
-  }
-  if (jobData.title.length > 100) {
-    errors.title = "Le titre ne peut pas dépasser 100 caractères";
-  }
-
-  if (!jobData.company || jobData.company.trim().length < 2) {
-    errors.company = "Le nom de l'entreprise est requis";
-  }
-
-  if (!jobData.location || jobData.location.trim().length < 2) {
-    errors.location = "La localisation est requise";
-  }
-
-  const salaryPattern = /^\d+(\s*-\s*\d+)?$/;
-  if (!salaryPattern.test(jobData.salary)) {
-    errors.salary = "Format de salaire invalide (ex: 600 ou 600-700)";
-  }
-
-  if (!jobData.description || jobData.description.trim().length < 50) {
-    errors.description = "La description doit contenir au moins 50 caractères";
-  }
-
-  return errors;
-};
-
-const sanitizeInput = (str) => {
-  if (!str) return '';
-  return str
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .trim();
-};
-
-const sanitizeJobData = (jobData) => {
-  return {
-    ...jobData,
-    title: sanitizeInput(jobData.title),
-    company: sanitizeInput(jobData.company),
-    location: sanitizeInput(jobData.location),
-    description: sanitizeInput(jobData.description),
-    requirements: Array.isArray(jobData.requirements) 
-      ? jobData.requirements.map(req => sanitizeInput(req))
-      : [],
-    benefits: Array.isArray(jobData.benefits) 
-      ? jobData.benefits.map(benefit => sanitizeInput(benefit))
-      : []
-  };
-};
-
-const generateSlug = (title, location) => {
-  return (title + '-' + location)
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-};
-
-// ==================== COMPOSANT PRINCIPAL ====================
-function JobBoardContent() {
-  const { isAdmin, signOut, isSupabaseConfigured, executeWithValidSession } = useAuth();
-  const { jobs, filteredJobs, loading, error, dispatch, fetchJobs } = useJobsData();
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-  
-  // États UI
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [showJobForm, setShowJobForm] = useState(false);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
-  const [editingJob, setEditingJob] = useState(null);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [isDeletingJob, setIsDeletingJob] = useState(null);
-  
-  // Utilisation du hook de formulaire
-  const {
-    form: jobForm,
-    updateForm,
-    resetForm,
-    isSubmitting,
-    setIsSubmitting,
-    submitProgress,
-    setSubmitProgress,
-    submitMessage,
-    setSubmitMessage
-  } = useJobForm();
-
-  // Mémorisation des locations uniques
-  const uniqueLocations = useMemo(() => {
-    return [...new Set(jobs.map(job => job.location))];
-  }, [jobs]);
-
-  // Charger les jobs au démarrage
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
-
-  // Gestion du mode sombre
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
-
-  // Filtrage des jobs
-  useEffect(() => {
-    let filtered = [...jobs];
-
-    if (searchTerm) {
-      filtered = filtered.filter(job =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (locationFilter && locationFilter !== 'all') {
-      filtered = filtered.filter(job => job.location === locationFilter);
-    }
-
-    if (typeFilter && typeFilter !== 'all') {
-      filtered = filtered.filter(job => job.type === typeFilter);
-    }
-
-    dispatch({ type: 'SET_FILTERED_JOBS', payload: filtered });
-  }, [jobs, searchTerm, locationFilter, typeFilter, dispatch]);
-
-  // ✅ FONCTION HANDLEJOBSUBMIT CORRIGÉE AVEC VOTRE VERSION + LOGS + GESTION ROBUSTE
-  const handleJobSubmit = useCallback(async () => {
+  // Fonction handleJobSubmit corrigée avec logs détaillés
+  const handleJobSubmit = async () => {
     console.log('🚀 DEBUT handleJobSubmit');
     setSubmitMessage(null);
-    setIsSubmitting(true);
 
     try {
-      console.log('📝 Préparation des données...');
-      const jobData = {
-        title: jobForm.title,
-        company: jobForm.company,
-        location: jobForm.location,
-        type: jobForm.type,
-        salary: jobForm.salary,
-        salary_type: jobForm.type === 'CDI' || jobForm.type === 'CDD' ? 'Annuel' : 'TJM',
-        description: jobForm.description,
-        requirements: jobForm.requirements.split('\n').filter(r => r.trim()),
-        benefits: jobForm.benefits.split('\n').filter(b => b.trim()),
-        slug: generateSlug(jobForm.title, jobForm.location),
-        featured: jobForm.featured,
-        posted_date: new Date().toISOString().split('T')[0]
-      };
+      await submitWithProgress(async () => {
+        console.log('📝 Préparation des données...');
+        const jobData = {
+          title: jobForm.title?.trim() || '',
+          company: jobForm.company?.trim() || '',
+          location: jobForm.location?.trim() || '',
+          type: jobForm.type,
+          salary: jobForm.salary,
+          salary_type: jobForm.type === 'CDI' || jobForm.type === 'CDD' ? 'Annuel' : 'TJM',
+          description: jobForm.description?.trim() || '',
+          requirements: jobForm.requirements.split('\n').filter(r => r.trim()),
+          benefits: jobForm.benefits.split('\n').filter(b => b.trim()),
+          slug: generateSlug(jobForm.title || '', jobForm.location || ''),
+          featured: jobForm.featured,
+          posted_date: new Date().toISOString().split('T')[0]
+        };
 
-      console.log('🔍 Validation...');
-      const errors = validateJobData(jobData);
-      if (Object.keys(errors).length > 0) {
-        setSubmitMessage({
-          type: 'error',
-          text: 'Erreurs de validation:\n' + Object.values(errors).join('\n')
-        });
-        setIsSubmitting(false); // ⚠️ Ne pas oublier ce reset
-        return;
-      }
+        console.log('🔍 Validation...');
+        const errors = validateJobData(jobData);
+        if (Object.keys(errors).length > 0) {
+          setSubmitMessage({
+            type: 'error',
+            text: 'Erreurs de validation:\n' + Object.values(errors).join('\n')
+          });
+          return;
+        }
 
-      const sanitizedData = sanitizeJobData(jobData);
+        const sanitizedData = sanitizeJobData(jobData);
 
-      console.log(editingJob ? '🛠️ Mise à jour...' : '➕ Création...');
-      
-      // Utilisation d'executeWithValidSession si disponible
-      if (executeWithValidSession) {
-        await executeWithValidSession(async () => {
+        console.log(editingJob ? '🛠️ Mise à jour...' : '➕ Création...');
+        
+        // Utiliser executeWithValidSession si disponible
+        const executeAction = async () => {
           if (editingJob) {
             await jobService.updateJob(editingJob.id, sanitizedData);
             dispatch({ type: 'UPDATE_JOB', payload: { ...sanitizedData, id: editingJob.id } });
+            setSubmitMessage({ type: 'success', text: '✅ Mission mise à jour avec succès !' });
           } else {
-            const newJob = await jobService.createJob(sanitizedData);
-            dispatch({ type: 'ADD_JOB', payload: newJob });
+            const result = await jobService.createJob(sanitizedData);
+            dispatch({ type: 'ADD_JOB', payload: result.data });
+            setSubmitMessage({ type: 'success', text: '✅ Mission créée avec succès !' });
           }
-        });
-      } else {
-        // Fallback sans gestion de session
-        if (editingJob) {
-          await jobService.updateJob(editingJob.id, sanitizedData);
-          dispatch({ type: 'UPDATE_JOB', payload: { ...sanitizedData, id: editingJob.id } });
+        };
+
+        if (executeWithValidSession) {
+          await executeWithValidSession(executeAction);
         } else {
-          const newJob = await jobService.createJob(sanitizedData);
-          dispatch({ type: 'ADD_JOB', payload: newJob });
+          await executeAction();
         }
-      }
 
-      setSubmitMessage({ 
-        type: 'success', 
-        text: editingJob ? '✅ Mission mise à jour avec succès !' : '✅ Mission créée avec succès !' 
+        console.log('⏳ Pause de 500ms');
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        console.log('🔄 Rafraîchissement des jobs...');
+        await fetchJobs();
+
+        console.log('🧹 Réinitialisation du formulaire');
+        resetFormState();
+
+        console.log('🪟 Fermeture du formulaire dans 2 secondes');
+        setTimeout(() => {
+          setShowJobForm(false);
+        }, 2000);
       });
-
-      console.log('⏳ Pause de 500ms');
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      console.log('🔄 Rafraîchissement des jobs...');
-      await fetchJobs();
-
-      console.log('🧹 Réinitialisation du formulaire');
-      resetForm();
-      setEditingJob(null);
-
-      console.log('🪟 Fermeture du formulaire dans 2 secondes');
-      setTimeout(() => {
-        setShowJobForm(false);
-      }, 2000);
     } catch (error) {
       console.error('❌ ERREUR dans handleJobSubmit:', error);
       setSubmitMessage({
         type: 'error',
         text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
       });
-    } finally {
-      console.log('🔚 FINALLY: reset isSubmitting');
-      setIsSubmitting(false);
     }
-  }, [jobForm, editingJob, executeWithValidSession, dispatch, resetForm, setIsSubmitting, setSubmitMessage, fetchJobs]);
-
-  // Fonction de suppression optimisée
-  const deleteJob = useCallback(async (id) => {
-    const job = jobs.find(j => j.id === id);
-    const confirmMessage = `Êtes-vous sûr de vouloir supprimer définitivement la mission "${job?.title}" ?\n\nCette action est irréversible.`;
     
-    if (!window.confirm(confirmMessage)) {
+    console.log('🔚 FIN handleJobSubmit');
+  };
+
+  // Fonction pour supprimer un job
+  const deleteJob = async (id, title) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la mission "${title}" ?\n\nCette action est irréversible.`)) {
       return;
     }
 
@@ -427,888 +388,1081 @@ function JobBoardContent() {
     setSubmitMessage(null);
 
     try {
-      if (executeWithValidSession) {
-        await executeWithValidSession(async () => {
-          await jobService.deleteJob(id);
-        });
-      } else {
+      const executeAction = async () => {
         await jobService.deleteJob(id);
+        dispatch({ type: 'DELETE_JOB', payload: id });
+        setSubmitMessage({
+          type: 'success',
+          text: '✅ Mission supprimée avec succès !'
+        });
+      };
+
+      if (executeWithValidSession) {
+        await executeWithValidSession(executeAction);
+      } else {
+        await executeAction();
       }
-      
-      dispatch({ type: 'DELETE_JOB', payload: id });
-      setSubmitMessage({
-        type: 'success',
-        text: '✅ Mission supprimée avec succès !'
-      });
+
+      await fetchJobs();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
       setSubmitMessage({
         type: 'error',
-        text: error.message?.includes('Session expirée') 
-          ? '🔒 Session expirée. Veuillez vous reconnecter.' 
-          : '❌ Erreur lors de la suppression: ' + error.message
+        text: '❌ ' + (error.message || 'Erreur lors de la suppression')
       });
     } finally {
       setIsDeletingJob(null);
     }
-  }, [jobs, executeWithValidSession, dispatch, setSubmitMessage]);
-
-  if (loading) {
-    return (
-      <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="container mx-auto px-4 py-8">
-          <SkeletonLoader darkMode={darkMode} />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <ThemeContext.Provider value={{ darkMode, setDarkMode }}>
-      <JobContext.Provider value={{ jobs, filteredJobs, dispatch }}>
-        <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-          {/* Notifications visuelles */}
-          {submitMessage && (
-            <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${
-              submitMessage.type === 'success' 
-                ? 'bg-green-100 text-green-800 border border-green-200' 
-                : 'bg-red-100 text-red-800 border border-red-200'
-            }`}>
-              <div className="flex items-center gap-2">
-                {submitMessage.type === 'success' ? (
-                  <CheckCircle className="w-5 h-5" />
-                ) : (
-                  <AlertTriangle className="w-5 h-5" />
-                )}
-                <span className="whitespace-pre-line">{submitMessage.text}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Progress indicator */}
-          {submitProgress && (
-            <div className="fixed top-16 right-4 z-50 bg-blue-100 text-blue-800 p-3 rounded-lg shadow-lg">
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>{submitProgress}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Header */}
-          <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-40 backdrop-blur-sm bg-opacity-95`}>
-            <div className="container mx-auto px-4">
-              <div className="flex items-center justify-between h-16">
-                {/* Logo */}
-                <Link to="/" className="flex items-center space-x-2">
-                  <Briefcase className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                  <span className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Ma Nouvelle Mission
-                  </span>
-                </Link>
-
-                {/* Navigation Desktop */}
-                <nav className="hidden md:flex items-center space-x-6">
-                  <Link 
-                    to="/" 
-                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                  >
-                    Accueil
-                  </Link>
-                  <Link 
-                    to="/missions" 
-                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                  >
-                    Toutes les missions
-                  </Link>
-                  <Link 
-                    to="/about" 
-                    className={`${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                  >
-                    À propos
-                  </Link>
-                </nav>
-
-                {/* Actions */}
-                <div className="flex items-center space-x-4">
-                  {/* Toggle mode sombre */}
-                  <button
-                    onClick={() => setDarkMode(!darkMode)}
-                    className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-600'} hover:bg-opacity-80 transition-colors`}
-                  >
-                    {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                  </button>
-
-                  {/* Boutons admin */}
-                  {isSupabaseConfigured && (
-                    <>
-                      {isAdmin ? (
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => setShowJobForm(true)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                          >
-                            <Plus className="w-4 h-4" />
-                            <span className="hidden sm:inline">Nouvelle mission</span>
-                          </button>
-                          <button
-                            onClick={signOut}
-                            className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'} hover:bg-opacity-80 transition-colors`}
-                          >
-                            <LogOut className="w-5 h-5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => setShowAdminLogin(true)}
-                          className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'} hover:bg-opacity-80 transition-colors`}
-                        >
-                          <LogIn className="w-5 h-5" />
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                  {/* Menu mobile */}
-                  <button
-                    onClick={() => setShowMobileMenu(!showMobileMenu)}
-                    className={`md:hidden p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'}`}
-                  >
-                    {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Menu mobile */}
-              {showMobileMenu && (
-                <div className={`md:hidden py-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                  <nav className="flex flex-col space-y-2">
-                    <Link 
-                      to="/" 
-                      className={`px-4 py-2 ${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-lg transition-colors`}
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      Accueil
-                    </Link>
-                    <Link 
-                      to="/missions" 
-                      className={`px-4 py-2 ${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-lg transition-colors`}
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      Toutes les missions
-                    </Link>
-                    <Link 
-                      to="/about" 
-                      className={`px-4 py-2 ${darkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-lg transition-colors`}
-                      onClick={() => setShowMobileMenu(false)}
-                    >
-                      À propos
-                    </Link>
-                  </nav>
-                </div>
-              )}
-            </div>
-          </header>
-
-          {/* Contenu principal */}
-          <main className="container mx-auto px-4 py-8">
-            {/* Hero Section */}
-            <div className="text-center mb-12">
-              <h1 className={`text-4xl md:text-6xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Trouvez votre{' '}
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  prochaine mission
-                </span>
-              </h1>
-              <p className={`text-xl mb-8 max-w-2xl mx-auto ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                Découvrez les meilleures opportunités de missions freelance et d'emplois dans le digital
-              </p>
-
-              {/* Barre de recherche */}
-              <div className={`max-w-4xl mx-auto ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg p-6 mb-8`}>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="relative">
-                    <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'} w-5 h-5`} />
-                    <input
-                      type="text"
-                      placeholder="Rechercher une mission..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
-                      } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                    />
-                  </div>
-
-                  <div className="relative">
-                    <MapPin className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'} w-5 h-5`} />
-                    <select
-                      value={locationFilter}
-                      onChange={(e) => setLocationFilter(e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                    >
-                      <option value="">Toutes les villes</option>
-                      {uniqueLocations.map(location => (
-                        <option key={location} value={location}>{location}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="relative">
-                    <Briefcase className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'} w-5 h-5`} />
-                    <select
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      className={`w-full pl-10 pr-4 py-3 rounded-lg border ${
-                        darkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white' 
-                          : 'bg-gray-50 border-gray-300 text-gray-900'
-                      } focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
-                    >
-                      <option value="">Tous les types</option>
-                      <option value="Mission">Mission</option>
-                      <option value="CDI">CDI</option>
-                      <option value="CDD">CDD</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Statistiques */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg`}>
-                <div className="flex items-center">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Briefcase className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{jobs.length}</p>
-                    <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Missions disponibles</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg`}>
-                <div className="flex items-center">
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>+{Math.floor(jobs.length * 0.3)}</p>
-                    <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Cette semaine</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl p-6 shadow-lg`}>
-                <div className="flex items-center">
-                  <div className="p-3 bg-purple-100 rounded-lg">
-                    <Users className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{uniqueLocations.length}</p>
-                    <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Villes actives</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Section missions à la une */}
-            <div className="mb-12">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Missions à la une
-                  </h2>
-                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {filteredJobs.length} missions disponibles
-                  </p>
-                </div>
-                <Sparkles className={`w-8 h-8 ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} />
-              </div>
-
-              {/* Liste des jobs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {filteredJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className={`${darkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:bg-gray-50'} rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
-                    onClick={() => setSelectedJob(job)}
-                  >
-                    {job.featured && (
-                      <div className="flex items-center mb-3">
-                        <Sparkles className="w-4 h-4 text-yellow-500 mr-1" />
-                        <span className="text-yellow-500 text-sm font-medium">À la une</span>
-                      </div>
-                    )}
-                    
-                    <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                      {job.title}
-                    </h3>
-                    
-                    <div className="flex items-center mb-2">
-                      <Building className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'} mr-2`} />
-                      <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{job.company}</span>
-                    </div>
-                    
-                    <div className="flex items-center mb-3">
-                      <MapPin className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'} mr-2`} />
-                      <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{job.location}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mb-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        job.type === 'CDI' 
-                          ? 'bg-green-100 text-green-800' 
-                          : job.type === 'CDD'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {job.type}
-                      </span>
-                      <div className="flex items-center">
-                        <Euro className="w-4 h-4 text-green-600 mr-1" />
-                        <span className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {job.salary} {job.salary_type}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} text-sm line-clamp-3`}>
-                      {job.description}
-                    </p>
-
-                    {/* Boutons admin */}
-                    {isAdmin && (
-                      <div className="flex space-x-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateForm({
-                              title: job.title,
-                              company: job.company,
-                              location: job.location,
-                              type: job.type,
-                              salary: job.salary,
-                              salaryType: job.salary_type,
-                              description: job.description,
-                              requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : '',
-                              benefits: Array.isArray(job.benefits) ? job.benefits.join('\n') : '',
-                              featured: job.featured
-                            });
-                            setEditingJob(job);
-                            setShowJobForm(true);
-                          }}
-                          className="flex items-center space-x-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
-                        >
-                          <Edit className="w-3 h-3" />
-                          <span>Modifier</span>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteJob(job.id);
-                          }}
-                          disabled={isDeletingJob === job.id}
-                          className="flex items-center space-x-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm disabled:opacity-50"
-                        >
-                          {isDeletingJob === job.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Trash2 className="w-3 h-3" />
-                          )}
-                          <span>Supprimer</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Message si aucun job */}
-              {filteredJobs.length === 0 && (
-                <div className={`text-center py-12 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl`}>
-                  <Briefcase className={`w-16 h-16 mx-auto mb-4 ${darkMode ? 'text-gray-600' : 'text-gray-400'}`} />
-                  <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Aucune mission trouvée
-                  </h3>
-                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Essayez de modifier vos critères de recherche
-                  </p>
-                </div>
-              )}
-
-              {/* Bouton voir toutes les missions */}
-              {filteredJobs.length > 0 && (
-                <div className="text-center">
-                  <Link
-                    to="/missions"
-                    className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    <span>Voir toutes les missions</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                </div>
-              )}
-            </div>
-          </main>
-
-          {/* Job Form Modal */}
-          {showJobForm && isSupabaseConfigured && (
-            <JobFormModal
-              jobForm={jobForm}
-              updateForm={updateForm}
-              onSubmit={handleJobSubmit}
-              onClose={() => {
-                setShowJobForm(false);
-                setEditingJob(null);
-                resetForm();
-              }}
-              isEditing={!!editingJob}
-              darkMode={darkMode}
-              isSubmitting={isSubmitting}
-              submitMessage={submitMessage}
-              submitProgress={submitProgress}
-            />
-          )}
-
-          {/* Job Detail Modal */}
-          {selectedJob && (
-            <JobDetailModal
-              job={selectedJob}
-              onClose={() => setSelectedJob(null)}
-              darkMode={darkMode}
-            />
-          )}
-
-          {/* Admin Login Modal */}
-          {showAdminLogin && (
-            <AdminLoginModal
-              onClose={() => setShowAdminLogin(false)}
-              darkMode={darkMode}
-            />
-          )}
-        </div>
-      </JobContext.Provider>
-    </ThemeContext.Provider>
-  );
-}
-
-// Composant Modal Job Form avec progress
-function JobFormModal({ jobForm, updateForm, onSubmit, onClose, isEditing, darkMode, isSubmitting, submitMessage, submitProgress }) {
-  const handleTypeChange = (type) => {
-    const newSalaryType = (type === 'CDI' || type === 'CDD') ? 'Annuel' : 'TJM';
-    updateForm({
-      type: type,
-      salaryType: newSalaryType,
-      salary: ''
-    });
   };
 
+  // Fonction pour gérer la reconnexion après session expirée
+  const handleReconnect = () => {
+    clearSessionExpired();
+    setSubmitMessage(null);
+    setShowAdminLogin(true);
+  };
+
+  // Fonction pour gérer la connexion admin
+  const handleAdminLogin = async (e) => {
+    e.preventDefault();
+    // Logique de connexion admin ici
+    setShowAdminLogin(false);
+  };
+
+  // Fonction pour postuler à une mission
+  const handleApply = async (jobId) => {
+    try {
+      const result = await jobService.incrementApplicants(jobId);
+      if (result.success) {
+        dispatch({ 
+          type: 'UPDATE_JOB', 
+          payload: { 
+            ...jobs.find(job => job.id === jobId), 
+            applicants: result.newCount 
+          } 
+        });
+        setSubmitMessage({
+          type: 'success',
+          text: '✅ Candidature envoyée avec succès !'
+        });
+        setShowApplicationForm(false);
+        setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+      } else {
+        setSubmitMessage({
+          type: 'error',
+          text: '❌ ' + result.message
+        });
+      }
+    } catch (error) {
+      setSubmitMessage({
+        type: 'error',
+        text: '❌ Erreur lors de l\'envoi de la candidature'
+      });
+    }
+  };
+
+  // Filtrage des jobs
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           job.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesLocation = !locationFilter || job.location.toLowerCase().includes(locationFilter.toLowerCase());
+      const matchesType = !typeFilter || job.type === typeFilter;
+      
+      return matchesSearch && matchesLocation && matchesType;
+    });
+  }, [jobs, searchTerm, locationFilter, typeFilter]);
+
+  // Obtenir les localisations uniques
+  const uniqueLocations = useMemo(() => {
+    return [...new Set(jobs.map(job => job.location))];
+  }, [jobs]);
+
+  // Fonction pour éditer un job
+  const editJob = useCallback((job) => {
+    setJobForm({
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      type: job.type,
+      salary: job.salary,
+      salaryType: job.salary_type,
+      description: job.description,
+      requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : '',
+      benefits: Array.isArray(job.benefits) ? job.benefits.join('\n') : '',
+      featured: job.featured || false
+    });
+    setEditingJob(job);
+    setShowJobForm(true);
+  }, []);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-        <div className={`sticky top-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-6 flex justify-between items-center`}>
-          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            {isEditing ? 'Modifier la mission' : 'Nouvelle mission'}
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         
-        <div className="p-6">
-          {/* Message de feedback */}
-          {submitMessage && (
-            <div className={`mb-4 p-3 rounded ${
-              submitMessage.type === 'success' 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-red-100 text-red-700'
-            }`}>
-              {submitMessage.text}
-            </div>
-          )}
-
-          {/* Progress indicator */}
-          {submitProgress && (
-            <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded flex items-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>{submitProgress}</span>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Titre du poste *
-              </label>
-              <input
-                type="text"
-                value={jobForm.title}
-                onChange={(e) => updateForm({ title: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                placeholder="Ex: Développeur React Senior"
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Entreprise *
-              </label>
-              <input
-                type="text"
-                value={jobForm.company}
-                onChange={(e) => updateForm({ company: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                placeholder="Nom de l'entreprise"
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Localisation *
-              </label>
-              <input
-                type="text"
-                value={jobForm.location}
-                onChange={(e) => updateForm({ location: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                placeholder="Ex: Paris, Remote, Lyon..."
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Type de contrat *
-                </label>
-                <select
-                  value={jobForm.type}
-                  onChange={(e) => handleTypeChange(e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                >
-                  <option value="Mission">Mission</option>
-                  <option value="CDI">CDI</option>
-                  <option value="CDD">CDD</option>
-                </select>
+        {/* Notifications */}
+        {submitMessage && (
+          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${
+            submitMessage.type === 'success' 
+              ? 'bg-green-100 border border-green-400 text-green-700 dark:bg-green-900 dark:border-green-600 dark:text-green-300' 
+              : 'bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-300'
+          }`}>
+            <div className="flex items-start">
+              {submitMessage.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+              )}
+              <div className="flex-1">
+                <p className="whitespace-pre-line">{submitMessage.text}</p>
+                {sessionExpired && (
+                  <button
+                    onClick={handleReconnect}
+                    className="mt-2 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Se reconnecter
+                  </button>
+                )}
               </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Salaire ({jobForm.salaryType}) *
-                </label>
-                <input
-                  type="text"
-                  value={jobForm.salary}
-                  onChange={(e) => updateForm({ salary: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                  placeholder={jobForm.salaryType === 'TJM' ? "Ex: 600" : "Ex: 45000"}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Description *
-              </label>
-              <textarea
-                value={jobForm.description}
-                onChange={(e) => updateForm({ description: e.target.value })}
-                rows={4}
-                className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                placeholder="Description détaillée du poste..."
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Compétences requises (une par ligne)
-              </label>
-              <textarea
-                value={jobForm.requirements}
-                onChange={(e) => updateForm({ requirements: e.target.value })}
-                rows={3}
-                className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                placeholder="React.js&#10;Node.js&#10;TypeScript"
-              />
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Avantages (un par ligne)
-              </label>
-              <textarea
-                value={jobForm.benefits}
-                onChange={(e) => updateForm({ benefits: e.target.value })}
-                rows={3}
-                className={`w-full px-3 py-2 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-                placeholder="Télétravail&#10;Tickets restaurant&#10;Mutuelle"
-              />
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="featured"
-                checked={jobForm.featured}
-                onChange={(e) => updateForm({ featured: e.target.checked })}
-                className="mr-2"
-              />
-              <label htmlFor="featured" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                Mettre en avant cette offre
-              </label>
-            </div>
-          </div>
-          
-          <button
-            onClick={onSubmit}
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 mt-6"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                {isEditing ? 'Mise à jour...' : 'Publication...'}
-              </>
-            ) : (
-              isEditing ? 'Mettre à jour' : 'Publier la mission'
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Composant Modal de détail de job
-function JobDetailModal({ job, onClose, darkMode }) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-        <div className={`sticky top-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-6 flex justify-between items-center`}>
-          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            {job.title}
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-        
-        <div className="p-6">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center">
-                  <Building className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'} mr-2`} />
-                  <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{job.company}</span>
-                </div>
-                <div className="flex items-center">
-                  <MapPin className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'} mr-2`} />
-                  <span className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{job.location}</span>
-                </div>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                job.type === 'CDI' 
-                  ? 'bg-green-100 text-green-800' 
-                  : job.type === 'CDD'
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-purple-100 text-purple-800'
-              }`}>
-                {job.type}
-              </span>
-            </div>
-
-            <div className="flex items-center">
-              <Euro className="w-5 h-5 text-green-600 mr-2" />
-              <span className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {job.salary} {job.salary_type}
-              </span>
-            </div>
-
-            <div>
-              <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                Description
-              </h3>
-              <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} leading-relaxed`}>
-                {job.description}
-              </p>
-            </div>
-
-            {job.requirements && job.requirements.length > 0 && (
-              <div>
-                <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Compétences requises
-                </h3>
-                <ul className="space-y-2">
-                  {job.requirements.map((req, index) => (
-                    <li key={index} className={`flex items-center ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                      {req}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {job.benefits && job.benefits.length > 0 && (
-              <div>
-                <h3 className={`text-lg font-semibold mb-3 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Avantages
-                </h3>
-                <ul className="space-y-2">
-                  {job.benefits.map((benefit, index) => (
-                    <li key={index} className={`flex items-center ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                      <CheckCircle className="w-4 h-4 text-blue-500 mr-2" />
-                      {benefit}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-              <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                Postuler à cette mission
+              <button
+                onClick={() => setSubmitMessage(null)}
+                className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+        )}
 
-// Composant Modal de connexion admin
-function AdminLoginModal({ onClose, darkMode }) {
-  const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+        {/* Header */}
+        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              {/* Logo */}
+              <Link to="/" className="flex items-center space-x-3 group">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Briefcase className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Ma Nouvelle Mission
+                </span>
+              </Link>
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+              {/* Navigation Desktop */}
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link to="/" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Accueil
+                </Link>
+                <Link to="/missions" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Missions
+                </Link>
+                <Link to="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  À propos
+                </Link>
+              </nav>
 
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      setError(error.message);
-    } else {
-      onClose();
-    }
-    
-    setLoading(false);
-  };
+              {/* Actions */}
+              <div className="flex items-center space-x-4">
+                {/* Toggle mode sombre */}
+                <button
+                  onClick={toggleDarkMode}
+                  className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  aria-label="Basculer le mode sombre"
+                >
+                  {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg max-w-md w-full`}>
-        <div className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} p-6 flex justify-between items-center`}>
-          <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            Connexion Admin
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        
-        <div className="p-6">
-          {error && (
-            <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-              {error}
+                {/* Boutons admin */}
+                {isSupabaseConfigured && (
+                  <>
+                    {isAdmin ? (
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            resetFormState();
+                            setShowJobForm(true);
+                          }}
+                          disabled={sessionExpired}
+                          className="hidden md:flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Nouvelle mission
+                        </button>
+                        <button
+                          onClick={signOut}
+                          className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          title="Se déconnecter"
+                        >
+                          <LogOut className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowAdminLogin(true)}
+                        className="hidden md:flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Admin
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* Menu mobile */}
+                <button
+                  onClick={() => setShowMobileMenu(!showMobileMenu)}
+                  className="md:hidden p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Menu mobile */}
+          {showMobileMenu && (
+            <div className="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+              <div className="px-4 py-2 space-y-2">
+                <Link
+                  to="/"
+                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Accueil
+                </Link>
+                <Link
+                  to="/missions"
+                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Missions
+                </Link>
+                <Link
+                  to="/about"
+                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  À propos
+                </Link>
+                
+                {isSupabaseConfigured && (
+                  <>
+                    {isAdmin ? (
+                      <>
+                        <button
+                          onClick={() => {
+                            resetFormState();
+                            setShowJobForm(true);
+                            setShowMobileMenu(false);
+                          }}
+                          disabled={sessionExpired}
+                          className="w-full text-left px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                        >
+                          <Plus className="w-4 h-4 inline mr-2" />
+                          Nouvelle mission
+                        </button>
+                        <button
+                          onClick={() => {
+                            signOut();
+                            setShowMobileMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4 inline mr-2" />
+                          Se déconnecter
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setShowAdminLogin(true);
+                          setShowMobileMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        <LogIn className="w-4 h-4 inline mr-2" />
+                        Admin
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
-          
-          <form onSubmit={handleSubmit}>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg mb-4 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg mb-4 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'}`}
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'Connexion...' : 'Se connecter'}
-            </button>
-          </form>
-        </div>
+        </header>
+
+        {/* Contenu principal */}
+        <main className="flex-1">
+          {location.pathname === '/' && (
+            <>
+              {/* Hero Section */}
+              <section className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 dark:from-blue-800 dark:via-purple-800 dark:to-blue-900">
+                <div className="absolute inset-0 bg-black/20"></div>
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+                  <div className="text-center">
+                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in">
+                      Trouvez votre
+                      <span className="block text-yellow-300">nouvelle mission</span>
+                    </h1>
+                    <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto animate-fade-in animation-delay-200">
+                      Découvrez les meilleures opportunités professionnelles et donnez un nouvel élan à votre carrière
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in animation-delay-400">
+                      <Link
+                        to="/missions"
+                        className="inline-flex items-center px-8 py-4 bg-white text-blue-600 rounded-xl font-semibold hover:bg-blue-50 transition-all hover:scale-105 shadow-lg"
+                      >
+                        <Search className="w-5 h-5 mr-2" />
+                        Explorer les missions
+                      </Link>
+                      <Link
+                        to="/about"
+                        className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all hover:scale-105"
+                      >
+                        <Users className="w-5 h-5 mr-2" />
+                        En savoir plus
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section des statistiques */}
+              <section className="py-16 bg-white dark:bg-gray-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="text-center animate-fade-in">
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Briefcase className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{jobs.length}+</div>
+                      <div className="text-gray-600 dark:text-gray-300">Missions disponibles</div>
+                    </div>
+                    <div className="text-center animate-fade-in animation-delay-200">
+                      <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Building className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">200+</div>
+                      <div className="text-gray-600 dark:text-gray-300">Entreprises partenaires</div>
+                    </div>
+                    <div className="text-center animate-fade-in animation-delay-400">
+                      <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <TrendingUp className="w-8 h-8 text-green-600 dark:text-green-400" />
+                      </div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">95%</div>
+                      <div className="text-gray-600 dark:text-gray-300">Taux de satisfaction</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section des missions en vedette */}
+              <section className="py-20 bg-gray-50 dark:bg-gray-900">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                      Missions en vedette
+                    </h2>
+                    <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                      Découvrez une sélection de nos meilleures opportunités professionnelles
+                    </p>
+                  </div>
+
+                  {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
+                          <div className="animate-pulse">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+                            <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : error ? (
+                    <div className="text-center py-12">
+                      <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                        Erreur de chargement
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
+                      <button
+                        onClick={fetchJobs}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Réessayer
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {filteredJobs.slice(0, 6).map((job, index) => (
+                        <div
+                          key={job.id}
+                          className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in mission-card ${
+                            job.featured ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''
+                          }`}
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          {job.featured && (
+                            <div className="flex items-center mb-4">
+                              <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
+                              <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                                Mission en vedette
+                              </span>
+                            </div>
+                          )}
+                          
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 job-title">
+                            {job.title}
+                          </h3>
+                          
+                          <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
+                            <Building className="w-4 h-4 mr-2" />
+                            <span className="job-company">{job.company}</span>
+                          </div>
+                          
+                          <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            <span>{job.location}</span>
+                          </div>
+                          
+                          <p className="text-gray-600 dark:text-gray-300 mb-6 job-description">
+                            {job.description}
+                          </p>
+                          
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <Euro className="w-4 h-4 text-green-600 dark:text-green-400 mr-1" />
+                              <span className="font-semibold text-green-600 dark:text-green-400">
+                                {job.salary} {job.salary_type}
+                              </span>
+                            </div>
+                            
+                            <button
+                              onClick={() => {
+                                setSelectedJob(job);
+                                setShowApplicationForm(true);
+                              }}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                            >
+                              Postuler
+                              <ArrowRight className="w-4 h-4 ml-2" />
+                            </button>
+                          </div>
+                          
+                          {isAdmin && (
+                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {job.applicants || 0} candidature(s)
+                              </span>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => editJob(job)}
+                                  disabled={sessionExpired}
+                                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Modifier"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => deleteJob(job.id, job.title)}
+                                  disabled={isDeletingJob === job.id || sessionExpired}
+                                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Supprimer"
+                                >
+                                  {isDeletingJob === job.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="text-center mt-12">
+                    <Link
+                      to="/missions"
+                      className="inline-flex items-center px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all hover:scale-105 shadow-lg"
+                    >
+                      Voir toutes les missions
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+        </main>
+
+        {/* Footer */}
+        <footer className="bg-gray-900 text-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              {/* Logo et description */}
+              <div className="md:col-span-2">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <Briefcase className="w-6 h-6 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold">Ma Nouvelle Mission</span>
+                </div>
+                <p className="text-gray-300 mb-6 leading-relaxed">
+                  La plateforme de référence pour connecter les talents avec les meilleures 
+                  opportunités professionnelles. Propulsé par Get in Talent.
+                </p>
+                <div className="flex space-x-4">
+                  <a href="mailto:hello@getintalent.fr" className="text-gray-400 hover:text-white transition-colors">
+                    <Mail className="w-5 h-5" />
+                  </a>
+                  <a href="tel:+33123456789" className="text-gray-400 hover:text-white transition-colors">
+                    <Phone className="w-5 h-5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Navigation */}
+              <div>
+                <h3 className="text-lg font-semibold mb-6">Navigation</h3>
+                <ul className="space-y-3">
+                  <li>
+                    <Link to="/" className="text-gray-300 hover:text-white transition-colors">
+                      Accueil
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/missions" className="text-gray-300 hover:text-white transition-colors">
+                      Missions
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/about" className="text-gray-300 hover:text-white transition-colors">
+                      À propos
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Sites partenaires */}
+              <div>
+                <h3 className="text-lg font-semibold mb-6">Nos sites</h3>
+                <ul className="space-y-3">
+                  <li>
+                    <a 
+                      href="https://getintalent.fr" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-white transition-colors flex items-center"
+                    >
+                      Get in Talent
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="https://ma-nouvelle-mission.fr" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-white transition-colors flex items-center"
+                    >
+                      Ma Nouvelle Mission
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Informations de contact */}
+            <div className="border-t border-gray-800 mt-12 pt-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                <div>
+                  <h4 className="font-semibold mb-2">Email</h4>
+                  <a href="mailto:hello@getintalent.fr" className="text-gray-300 hover:text-white transition-colors">
+                    hello@getintalent.fr
+                  </a>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Téléphone</h4>
+                  <a href="tel:+33123456789" className="text-gray-300 hover:text-white transition-colors">
+                    +33 1 23 45 67 89
+                  </a>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Adresse</h4>
+                  <p className="text-gray-300">Paris, France</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Copyright */}
+            <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+              <p className="text-gray-400">
+                © 2025 Ma Nouvelle Mission - Propulsé par Get in Talent. Tous droits réservés.
+              </p>
+            </div>
+          </div>
+        </footer>
+
+        {/* Modales */}
+        
+        {/* Modal de connexion admin */}
+        {showAdminLogin && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-md">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Connexion Admin
+                </h2>
+                <button
+                  onClick={() => setShowAdminLogin(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleAdminLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={adminForm.email}
+                    onChange={(e) => setAdminForm({...adminForm, email: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Mot de passe
+                  </label>
+                  <input
+                    type="password"
+                    value={adminForm.password}
+                    onChange={(e) => setAdminForm({...adminForm, password: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    required
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Se connecter
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de formulaire de mission */}
+        {showJobForm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-4xl my-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {editingJob ? 'Modifier la mission' : 'Nouvelle mission'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowJobForm(false);
+                    setEditingJob(null);
+                    resetFormState();
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Barre de progression */}
+              {isSubmitting && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      {editingJob ? 'Mise à jour en cours...' : 'Création en cours...'}
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      {progress}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+              
+              <form className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Titre de la mission *
+                    </label>
+                    <input
+                      type="text"
+                      value={jobForm.title}
+                      onChange={(e) => setJobForm({...jobForm, title: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Entreprise *
+                    </label>
+                    <input
+                      type="text"
+                      value={jobForm.company}
+                      onChange={(e) => setJobForm({...jobForm, company: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Localisation *
+                    </label>
+                    <input
+                      type="text"
+                      value={jobForm.location}
+                      onChange={(e) => setJobForm({...jobForm, location: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Type de contrat
+                    </label>
+                    <select
+                      value={jobForm.type}
+                      onChange={(e) => setJobForm({...jobForm, type: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    >
+                      <option value="Mission">Mission</option>
+                      <option value="CDI">CDI</option>
+                      <option value="CDD">CDD</option>
+                      <option value="Freelance">Freelance</option>
+                      <option value="Stage">Stage</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Salaire *
+                    </label>
+                    <input
+                      type="text"
+                      value={jobForm.salary}
+                      onChange={(e) => setJobForm({...jobForm, salary: e.target.value})}
+                      placeholder="ex: 600 ou 45K-55K"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      required
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Type de salaire
+                    </label>
+                    <select
+                      value={jobForm.salaryType}
+                      onChange={(e) => setJobForm({...jobForm, salaryType: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      disabled={isSubmitting}
+                    >
+                      <option value="TJM">TJM</option>
+                      <option value="Annuel">Annuel</option>
+                      <option value="Mensuel">Mensuel</option>
+                      <option value="Horaire">Horaire</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description *
+                  </label>
+                  <textarea
+                    value={jobForm.description}
+                    onChange={(e) => setJobForm({...jobForm, description: e.target.value})}
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Exigences (une par ligne)
+                  </label>
+                  <textarea
+                    value={jobForm.requirements}
+                    onChange={(e) => setJobForm({...jobForm, requirements: e.target.value})}
+                    rows={4}
+                    placeholder="ex: 5+ années d'expérience&#10;Maîtrise de React&#10;Connaissance de Node.js"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Avantages (un par ligne)
+                  </label>
+                  <textarea
+                    value={jobForm.benefits}
+                    onChange={(e) => setJobForm({...jobForm, benefits: e.target.value})}
+                    rows={4}
+                    placeholder="ex: Télétravail partiel&#10;Mutuelle d'entreprise&#10;Formation continue"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    checked={jobForm.featured}
+                    onChange={(e) => setJobForm({...jobForm, featured: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="featured" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Mission en vedette
+                  </label>
+                </div>
+                
+                <div className="flex justify-end space-x-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowJobForm(false);
+                      setEditingJob(null);
+                      resetFormState();
+                    }}
+                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    disabled={isSubmitting}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleJobSubmit}
+                    disabled={isSubmitting}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {editingJob ? 'Mise à jour...' : 'Publication...'}
+                      </>
+                    ) : (
+                      editingJob ? 'Mettre à jour' : 'Publier la mission'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de candidature */}
+        {showApplicationForm && selectedJob && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-2xl my-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Postuler à cette mission
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowApplicationForm(false);
+                    setSelectedJob(null);
+                    setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
+                  {selectedJob.title}
+                </h3>
+                <p className="text-blue-700 dark:text-blue-400 text-sm">
+                  {selectedJob.company} • {selectedJob.location}
+                </p>
+              </div>
+              
+              <form className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Nom complet *
+                    </label>
+                    <input
+                      type="text"
+                      value={applicationForm.name}
+                      onChange={(e) => setApplicationForm({...applicationForm, name: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={applicationForm.email}
+                      onChange={(e) => setApplicationForm({...applicationForm, email: e.target.value})}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Téléphone
+                  </label>
+                  <input
+                    type="tel"
+                    value={applicationForm.phone}
+                    onChange={(e) => setApplicationForm({...applicationForm, phone: e.target.value})}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Message de motivation
+                  </label>
+                  <textarea
+                    value={applicationForm.message}
+                    onChange={(e) => setApplicationForm({...applicationForm, message: e.target.value})}
+                    rows={4}
+                    placeholder="Expliquez pourquoi vous êtes intéressé(e) par cette mission..."
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowApplicationForm(false);
+                      setSelectedJob(null);
+                      setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+                    }}
+                    className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleApply(selectedJob.id)}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                  >
+                    Envoyer ma candidature
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
 
-// Wrapper pour les missions
-function MissionsPageWrapper() {
-  const { isAdmin, signOut, isSupabaseConfigured } = useAuth();
-  const { darkMode } = useTheme();
+// Wrapper avec les providers
+const App = () => {
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darkMode') === 'true' || 
+             (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    return false;
+  });
 
-  return (
-    <Suspense fallback={<LoadingSpinner darkMode={darkMode} />}>
-      <MissionsPage 
-        isAdmin={isAdmin}
-        signOut={signOut}
-        isSupabaseConfigured={isSupabaseConfigured}
-        darkMode={darkMode}
-      />
-    </Suspense>
-  );
-}
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode(prev => {
+      const newValue = !prev;
+      localStorage.setItem('darkMode', newValue.toString());
+      return newValue;
+    });
+  }, []);
 
-// Wrapper pour la page À propos
-function AboutPageWrapper() {
-  const { isAdmin, signOut, isSupabaseConfigured } = useAuth();
-  const { darkMode } = useTheme();
+  const jobsData = useJobsData();
 
-  return (
-    <Suspense fallback={<LoadingSpinner darkMode={darkMode} />}>
-      <AboutPage 
-        isAdmin={isAdmin}
-        signOut={signOut}
-        isSupabaseConfigured={isSupabaseConfigured}
-        darkMode={darkMode}
-      />
-    </Suspense>
-  );
-}
-
-// Composant principal de l'application
-function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<JobBoardContent />} />
-            <Route path="/missions" element={<MissionsPageWrapper />} />
-            <Route path="/about" element={<AboutPageWrapper />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
+      <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
+        <JobContext.Provider value={jobsData}>
+          <Router>
+            <Routes>
+              <Route path="/" element={<JobBoardContent />} />
+              <Route 
+                path="/missions" 
+                element={
+                  <Suspense fallback={
+                    <div className="min-h-screen flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                    </div>
+                  }>
+                    <MissionsPage />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/about" 
+                element={
+                  <Suspense fallback={
+                    <div className="min-h-screen flex items-center justify-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                    </div>
+                  }>
+                    <AboutPage />
+                  </Suspense>
+                } 
+              />
+            </Routes>
+          </Router>
+        </JobContext.Provider>
+      </ThemeContext.Provider>
     </ErrorBoundary>
   );
-}
+};
 
 export default App;
 
