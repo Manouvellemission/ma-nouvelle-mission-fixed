@@ -1,4 +1,4 @@
-// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION CORRIGÉE)
+    // src/App.jsx - Application principale Ma Nouvelle Mission (VERSION CORRIGÉE)
 import React, { useState, useEffect, useCallback, useMemo, Suspense, useReducer, createContext, useContext, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, ExternalLink, Mail, Phone, Upload } from 'lucide-react';
@@ -1484,12 +1484,7 @@ const JobBoardContent = () => {
               </div>
             </div>
           </div>
-              )}
-      </div>
-    </div>
-  );
-};
-
+        )}
 
 // ==================== WRAPPER AVEC PROVIDERS ====================
 const App = () => {
