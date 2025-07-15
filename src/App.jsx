@@ -929,7 +929,17 @@ const JobBoardContent = () => {
                     </div>
                   ) : (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredJobs.slice(0, 6).map((job, index) => (
+                  [...filteredJobs]
+                    .sort((a, b) => {
+                      // D'abord, trier par featured (true avant false)
+                      if (a.featured && !b.featured) return -1;
+                      if (!a.featured && b.featured) return 1;
+                      
+                      // Ensuite, trier par date (plus récent d'abord)
+                      return new Date(b.posted_date) - new Date(a.posted_date);
+                    })
+                    .slice(0, 6)
+                    .map((job, index) => (
                     <div
                       key={job.id}
                       className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in mission-card overflow-hidden flex flex-col ${
