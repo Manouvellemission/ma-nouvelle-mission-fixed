@@ -1269,6 +1269,269 @@ const JobBoardContent = () => {
         </footer>
 
         {/* Modales */}
+
+        // ÉTAPE 1 : AJOUT ULTRA-SÉCURISÉ DU FORMULAIRE UNIQUEMENT
+// Trouvez cette ligne dans votre code : {/* Modal de connexion admin */}
+// Et ajoutez JUSTE AVANT cette ligne :
+
+        {/* ==================== FORMULAIRE DE MISSION - AJOUT SÉCURISÉ ==================== */}
+        {showJobForm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {editingJob ? 'Modifier la mission' : 'Créer une nouvelle mission'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowJobForm(false);
+                    resetFormState();
+                  }}
+                  className={`text-gray-400 hover:text-gray-600 ${darkMode ? 'dark:hover:text-gray-300' : ''}`}
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {isSubmitting && (
+                <div className="mb-6">
+                  <div className="flex items-center mb-2">
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    <span className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {editingJob ? 'Mise à jour...' : 'Création...'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleJobSubmit();
+              }} className="space-y-6">
+                
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Titre de la mission *
+                  </label>
+                  <input
+                    type="text"
+                    value={jobForm.title}
+                    onChange={(e) => setJobForm({...jobForm, title: e.target.value})}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 placeholder-gray-500'
+                    }`}
+                    placeholder="Ex: Développeur Full Stack React/Node.js"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Entreprise *
+                  </label>
+                  <input
+                    type="text"
+                    value={jobForm.company}
+                    onChange={(e) => setJobForm({...jobForm, company: e.target.value})}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 placeholder-gray-500'
+                    }`}
+                    placeholder="Ex: TechCorp Innovation"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Localisation *
+                  </label>
+                  <input
+                    type="text"
+                    value={jobForm.location}
+                    onChange={(e) => setJobForm({...jobForm, location: e.target.value})}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 placeholder-gray-500'
+                    }`}
+                    placeholder="Ex: Paris, Lyon, Remote..."
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Type de contrat *
+                    </label>
+                    <select
+                      value={jobForm.type}
+                      onChange={(e) => setJobForm({...jobForm, type: e.target.value})}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        darkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300'
+                      }`}
+                      required
+                    >
+                      <option value="Mission">Mission</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                      Salaire *
+                    </label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={jobForm.salary}
+                        onChange={(e) => setJobForm({...jobForm, salary: e.target.value})}
+                        className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          darkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                            : 'bg-white border-gray-300 placeholder-gray-500'
+                        }`}
+                        placeholder="Ex: 650"
+                        required
+                      />
+                      <select
+                        value={jobForm.salaryType}
+                        onChange={(e) => setJobForm({...jobForm, salaryType: e.target.value})}
+                        className={`px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          darkMode 
+                            ? 'bg-gray-700 border-gray-600 text-white' 
+                            : 'bg-white border-gray-300'
+                        }`}
+                      >
+                        <option value="TJM">TJM</option>
+                        <option value="Annuel">Annuel</option>
+                        <option value="Mensuel">Mensuel</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Description *
+                  </label>
+                  <textarea
+                    value={jobForm.description}
+                    onChange={(e) => setJobForm({...jobForm, description: e.target.value})}
+                    rows={6}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 placeholder-gray-500'
+                    }`}
+                    placeholder="Décrivez la mission, les technologies utilisées, l'environnement de travail..."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Prérequis (un par ligne)
+                  </label>
+                  <textarea
+                    value={jobForm.requirements}
+                    onChange={(e) => setJobForm({...jobForm, requirements: e.target.value})}
+                    rows={4}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 placeholder-gray-500'
+                    }`}
+                    placeholder="Ex:
+5+ années d'expérience en développement web
+Maîtrise de React et Node.js
+Connaissance de PostgreSQL"
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    Avantages (un par ligne)
+                  </label>
+                  <textarea
+                    value={jobForm.benefits}
+                    onChange={(e) => setJobForm({...jobForm, benefits: e.target.value})}
+                    rows={4}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      darkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 placeholder-gray-500'
+                    }`}
+                    placeholder="Ex:
+Télétravail partiel possible
+Mutuelle d'entreprise
+Formation continue
+Tickets restaurant"
+                  />
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    checked={jobForm.featured}
+                    onChange={(e) => setJobForm({...jobForm, featured: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="featured" className={`ml-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Mission en vedette (apparaît en premier)
+                  </label>
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowJobForm(false);
+                      resetFormState();
+                    }}
+                    disabled={isSubmitting}
+                    className={`px-6 py-3 border rounded-lg transition-colors disabled:opacity-50 ${
+                      darkMode 
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 flex items-center"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        {editingJob ? 'Mise à jour...' : 'Création...'}
+                      </>
+                    ) : (
+                      <>
+                        {editingJob ? 'Mettre à jour' : 'Créer la mission'}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        {/* ==================== FIN FORMULAIRE DE MISSION ==================== */}
         
         {/* Modal de connexion admin */}
         {showAdminLogin && (
