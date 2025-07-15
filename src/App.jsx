@@ -929,7 +929,7 @@ const JobBoardContent = () => {
                     </div>
                   ) : (
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  [...filteredJobs]
+                  {[...filteredJobs]
                     .sort((a, b) => {
                       // D'abord, trier par featured (true avant false)
                       if (a.featured && !b.featured) return -1;
