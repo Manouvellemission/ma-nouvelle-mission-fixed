@@ -150,13 +150,13 @@ const AboutPage = () => {
             </div>
             <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 p-8 rounded-2xl">
               <div className="text-center">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                  <img 
-                    src="/logo-adefree.png" 
-                    alt="Adefree" 
-                    className="w-16 h-16 object-contain"
-                  />
-                </div>
+                <div className="flex justify-center mb-6">
+                    <img 
+                      src="/logo-adefree.png" 
+                      alt="Adefree" 
+                      className="w-20 h-20 object-contain"
+                    />
+                  </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                   Adefree
                 </h3>
