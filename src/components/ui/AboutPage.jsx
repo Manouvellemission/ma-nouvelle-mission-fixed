@@ -277,35 +277,56 @@ const AboutPage = () => {
             </div>
 
             {/* Sites partenaires */}
-            <div>
-              <h3 className="text-lg font-semibold mb-6">Nos sites</h3>
-              <ul className="space-y-3">
-                <li>
-                  <a 
-                    href="https://getintalent.fr" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-gray-300 hover:text-white transition-colors flex items-center"
-                  >
-                    Get in Talent
-                    <ExternalLink className="w-3 h-3 ml-1" />
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="https://ma-nouvelle-mission.fr" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-gray-300 hover:text-white transition-colors flex items-center"
-                  >
-                    Ma Nouvelle Mission
-                    <ExternalLink className="w-3 h-3 ml-1" />
-                  </a>
-                </li>
-              </ul>
+              <div>
+                <h3 className="text-lg font-semibold mb-6">Nos sites</h3>
+                <ul className="space-y-3">
+                  <li>
+                    <a 
+                      href="https://www.adefree.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-white transition-colors flex items-center"
+                    >
+                      Adefree
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="https://tjmfreelance.com/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-white transition-colors flex items-center"
+                    >
+                      Calcul TJM Freelance
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="https://getintalent.fr" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-white transition-colors flex items-center"
+                    >
+                      Get in Talent
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </li>
+                  <li>
+                    <a 
+                      href="https://pickmeup.fr/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-300 hover:text-white transition-colors flex items-center"
+                    >
+                      PickMeUp
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
-          </div>
-
           {/* Copyright */}
           <div className="border-t border-gray-800 mt-12 pt-8 text-center">
             <p className="text-gray-400">
