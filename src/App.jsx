@@ -1018,9 +1018,9 @@ const JobBoardContent = () => {
                         <span className="truncate">{job.location}</span>
                       </div>
                       
-                      <p className="text-gray-600 dark:text-gray-300 mb-6 job-description line-clamp-3">
-                        {job.description}
-                      </p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6 job-description line-clamp-3 force-break">
+                    {job.description}
+                    </p>
                       
                       <div className="mt-auto">
                         <div className="flex items-center justify-between flex-wrap gap-2">
