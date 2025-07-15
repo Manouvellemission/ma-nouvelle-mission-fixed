@@ -928,94 +928,96 @@ const JobBoardContent = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {filteredJobs.slice(0, 6).map((job, index) => (
-                        <div
-                          key={job.id}
-                          className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in mission-card ${
-                            job.featured ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''
-                          }`}
-                          style={{ animationDelay: `${index * 100}ms` }}
-                        >
-                          {job.featured && (
-                            <div className="flex items-center mb-4">
-                              <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
-                              <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
-                                Mission en vedette
-                              </span>
-                            </div>
-                          )}
-                          
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 job-title">
-                            {job.title}
-                          </h3>
-                          
-                          <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
-                            <Building className="w-4 h-4 mr-2" />
-                            <span className="job-company">{job.company}</span>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {filteredJobs.slice(0, 6).map((job, index) => (
+                    <div
+                      key={job.id}
+                      className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in mission-card overflow-hidden flex flex-col ${
+                        job.featured ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''
+                      }`}
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
+                      {job.featured && (
+                        <div className="flex items-center mb-4">
+                          <Sparkles className="w-4 h-4 text-yellow-500 mr-2 flex-shrink-0" />
+                          <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400 truncate">
+                            Mission en vedette
+                          </span>
+                        </div>
+                      )}
+                      
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 job-title break-words hyphens-auto">
+                        {job.title}
+                      </h3>
+                      
+                      <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2 min-w-0">
+                        <Building className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="job-company truncate">{job.company}</span>
+                      </div>
+                      
+                      <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4 min-w-0">
+                        <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">{job.location}</span>
+                      </div>
+                      
+                      <p className="text-gray-600 dark:text-gray-300 mb-6 job-description line-clamp-3">
+                        {job.description}
+                      </p>
+                      
+                      <div className="mt-auto">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center min-w-0">
+                            <Euro className="w-4 h-4 text-green-600 dark:text-green-400 mr-1 flex-shrink-0" />
+                            <span className="font-semibold text-green-600 dark:text-green-400 truncate">
+                              {job.salary} {job.salary_type}
+                            </span>
                           </div>
                           
-                          <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4">
-                            <MapPin className="w-4 h-4 mr-2" />
-                            <span>{job.location}</span>
-                          </div>
-                          
-                          <p className="text-gray-600 dark:text-gray-300 mb-6 job-description">
-                            {job.description}
-                          </p>
-                          
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <Euro className="w-4 h-4 text-green-600 dark:text-green-400 mr-1" />
-                              <span className="font-semibold text-green-600 dark:text-green-400">
-                                {job.salary} {job.salary_type}
-                              </span>
-                            </div>
-                            
+                          <button
+                            onClick={() => {
+                              setSelectedJob(job);
+                              setShowApplicationForm(true);
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center whitespace-nowrap"
+                          >
+                            Postuler
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {isAdmin && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                            {job.applicants || 0} candidature(s)
+                          </span>
+                          <div className="flex space-x-2">
                             <button
-                              onClick={() => {
-                                setSelectedJob(job);
-                                setShowApplicationForm(true);
-                              }}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                              onClick={() => editJob(job)}
+                              disabled={sessionExpired}
+                              className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
+                              title="Modifier"
                             >
-                              Postuler
-                              <ArrowRight className="w-4 h-4 ml-2" />
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteJob(job.id, job.title)}
+                              disabled={isDeletingJob === job.id || sessionExpired}
+                              className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                              title="Supprimer"
+                            >
+                              {isDeletingJob === job.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
                             </button>
                           </div>
-                          
-                          {isAdmin && (
-                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                              <span className="text-sm text-gray-500 dark:text-gray-400">
-                                {job.applicants || 0} candidature(s)
-                              </span>
-                              <div className="flex space-x-2">
-                                <button
-                                  onClick={() => editJob(job)}
-                                  disabled={sessionExpired}
-                                  className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50"
-                                  title="Modifier"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => deleteJob(job.id, job.title)}
-                                  disabled={isDeletingJob === job.id || sessionExpired}
-                                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-                                  title="Supprimer"
-                                >
-                                  {isDeletingJob === job.id ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="w-4 h-4" />
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                          )}
                         </div>
-                      ))}
+                      )}
                     </div>
+                  ))}
+                </div>
                   )}
 
                   <div className="text-center mt-12">
