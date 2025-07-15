@@ -64,6 +64,16 @@ const MissionsPage = ({ darkMode }) => {
     return matchesSearch && matchesType && matchesLocation;
   });
 
+  // Trier les missions : missions en vedette d'abord, puis par date
+  const sortedJobs = [...filteredJobs].sort((a, b) => {
+    // D'abord, trier par featured (true avant false)
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    
+    // Ensuite, trier par date (plus récent d'abord)
+    return new Date(b.posted_date) - new Date(a.posted_date);
+  });
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -115,7 +125,7 @@ const MissionsPage = ({ darkMode }) => {
                 onChange={(e) => setFilters({...filters, type: e.target.value})}
                 className="px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
               >
-                <option value="">Tous les types</option>
+                <option value="">Toutes les missions</option>
                 <option value="Mission">Mission</option>
               </select>
 
@@ -162,7 +172,7 @@ const MissionsPage = ({ darkMode }) => {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredJobs.map((job, index) => (
+                {sortedJobs.map((job, index) => (
                   <div
                     key={job.id}
                     className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in cursor-pointer mission-card overflow-hidden flex flex-col ${
@@ -227,7 +237,7 @@ const MissionsPage = ({ darkMode }) => {
               </div>
 
               {/* Message si aucun résultat */}
-              {filteredJobs.length === 0 && !loading && (
+              {sortedJobs.length === 0 && !loading && (
                 <div className="text-center py-16">
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
                     <Search className="w-8 h-8 text-gray-400" />
