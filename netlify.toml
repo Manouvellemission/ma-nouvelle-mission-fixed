@@ -9,7 +9,7 @@
 # Redirection pour le sitemap dynamique (doit être AVANT le catch-all)
 [[redirects]]
   from = "/sitemap.xml"
-  to = "/api/sitemap"
+  to = "/.netlify/functions/sitemap"
   status = 200
   force = true
 
