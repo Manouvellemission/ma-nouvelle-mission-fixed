@@ -1,47 +1,128 @@
+// src/components/ui/MissionDetailPage.jsx - Version simple sans react-helmet-async
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building, MapPin, Euro, Briefcase, CheckCircle, Users, Calendar } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Building, MapPin, Euro, Briefcase, CheckCircle, Users, Calendar, Upload, X, ArrowRight, Loader2 } from 'lucide-react';
 import { jobService } from '../../services/jobService';
 
-const MissionDetailPageTest = ({ darkMode }) => {
+const MissionDetailPage = ({ darkMode }) => {
   const { slug } = useParams();
-  const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [applicationForm, setApplicationForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+    cv: null
+  });
 
   // Charger la mission par slug
   useEffect(() => {
     const fetchJobBySlug = async () => {
-      console.log('🔍 Recherche de la mission avec slug:', slug);
       setLoading(true);
       try {
-        // Pour le test, on va chercher toutes les missions et filtrer par slug
         const jobs = await jobService.fetchJobs();
-        console.log('📋 Jobs récupérés:', jobs.length);
-        
         const foundJob = jobs.find(j => j.slug === slug);
-        console.log('✅ Mission trouvée:', foundJob);
         
         if (foundJob) {
           setJob(foundJob);
+          // Mettre à jour le titre de la page
+          document.title = `${foundJob.title} - ${foundJob.company} | Ma Nouvelle Mission`;
         } else {
           setError('Mission introuvable');
+          document.title = 'Mission introuvable - Ma Nouvelle Mission';
         }
       } catch (err) {
         setError('Erreur lors du chargement de la mission');
-        console.error('❌ Erreur:', err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    if (slug) {
-      fetchJobBySlug();
-    }
+    fetchJobBySlug();
   }, [slug]);
 
-  // État de chargement
+  // Gérer la soumission de candidature
+  const handleApply = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('form-name', 'job-application');
+      formData.append('name', applicationForm.name);
+      formData.append('email', applicationForm.email);
+      formData.append('phone', applicationForm.phone || '');
+      formData.append('message', applicationForm.message || '');
+      formData.append('jobTitle', job.title);
+      formData.append('company', job.company);
+      formData.append('location', job.location);
+      
+      if (applicationForm.cv) {
+        formData.append('cv', applicationForm.cv);
+      }
+
+      const netlifyResponse = await fetch('/', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!netlifyResponse.ok) {
+        throw new Error('Erreur lors de l\'envoi du formulaire');
+      }
+
+      // Incrémenter le compteur de candidatures
+      await jobService.incrementApplicants(job.id);
+      
+      setSubmitMessage({
+        type: 'success',
+        text: '✅ Candidature envoyée avec succès !'
+      });
+      
+      setShowApplicationForm(false);
+      setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+      
+      // Rafraîchir les données
+      const jobs = await jobService.fetchJobs();
+      const updatedJob = jobs.find(j => j.id === job.id);
+      if (updatedJob) {
+        setJob(updatedJob);
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi:', error);
+      setSubmitMessage({
+        type: 'error',
+        text: '❌ Erreur lors de l\'envoi de la candidature'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Effacer le message après 5 secondes
+  useEffect(() => {
+    if (submitMessage) {
+      const timer = setTimeout(() => {
+        setSubmitMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitMessage]);
+
+  // Scroll vers le formulaire
+  const scrollToForm = () => {
+    const formElement = document.getElementById('application-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   if (loading) {
     return (
       <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
@@ -53,7 +134,6 @@ const MissionDetailPageTest = ({ darkMode }) => {
     );
   }
 
-  // État d'erreur
   if (error || !job) {
     return (
       <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
@@ -76,35 +156,45 @@ const MissionDetailPageTest = ({ darkMode }) => {
     );
   }
 
-  // Affichage de la mission
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          
-          {/* Navigation */}
-          <Link 
-            to="/missions"
-            className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-6 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Retour aux missions
-          </Link>
-          
-          {/* TEST - Debug info */}
-          <div className="bg-yellow-100 dark:bg-yellow-900 rounded-lg p-4 mb-6">
-            <p className="text-yellow-800 dark:text-yellow-200 font-semibold">
-              🧪 Mode TEST - Page mission individuelle
-            </p>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-              Slug: {slug} | ID: {job.id} | Title: {job.title}
-            </p>
+        
+        {/* Notifications */}
+        {submitMessage && (
+          <div className={`fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${
+            submitMessage.type === 'success' 
+              ? 'bg-green-100 border border-green-400 text-green-700 dark:bg-green-900 dark:border-green-600 dark:text-green-300' 
+              : 'bg-red-100 border border-red-400 text-red-700 dark:bg-red-900 dark:border-red-600 dark:text-red-300'
+          }`}>
+            <div className="flex items-start">
+              {submitMessage.type === 'success' ? (
+                <CheckCircle className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+              ) : (
+                <X className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" />
+              )}
+              <p>{submitMessage.text}</p>
+            </div>
           </div>
+        )}
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Navigation */}
+          <nav className="flex items-center text-sm mb-6" aria-label="Breadcrumb">
+            <Link to="/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+              Accueil
+            </Link>
+            <span className="mx-2 text-gray-400">/</span>
+            <Link to="/missions" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+              Missions
+            </Link>
+            <span className="mx-2 text-gray-400">/</span>
+            <span className="text-gray-900 dark:text-white">{job.title}</span>
+          </nav>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Contenu principal */}
             <div className="lg:col-span-2 space-y-6">
-              
               {/* En-tête de la mission */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
                 {job.featured && (
@@ -134,10 +224,17 @@ const MissionDetailPageTest = ({ darkMode }) => {
                   </div>
                 </div>
                 
-                <div className="flex items-center text-2xl font-bold text-green-600 dark:text-green-400">
+                <div className="flex items-center text-2xl font-bold text-green-600 dark:text-green-400 mb-6">
                   <Euro className="w-6 h-6 mr-2" />
                   <span>{job.salary} {job.salary_type}</span>
                 </div>
+                
+                <button
+                  onClick={scrollToForm}
+                  className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all hover:scale-105 shadow-lg"
+                >
+                  Postuler maintenant
+                </button>
               </div>
 
               {/* Description */}
@@ -183,13 +280,156 @@ const MissionDetailPageTest = ({ darkMode }) => {
                   </ul>
                 </div>
               )}
+
+              {/* Formulaire de candidature */}
+              <div id="application-form" className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  Postuler à cette mission
+                </h2>
+
+                {!showApplicationForm ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">
+                      Intéressé(e) par cette opportunité ? Envoyez votre candidature dès maintenant !
+                    </p>
+                    <button
+                      onClick={() => setShowApplicationForm(true)}
+                      className="px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all hover:scale-105 shadow-lg"
+                    >
+                      Commencer ma candidature
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleApply} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Nom complet *
+                        </label>
+                        <input
+                          type="text"
+                          value={applicationForm.name}
+                          onChange={(e) => setApplicationForm({...applicationForm, name: e.target.value})}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          required
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Email *
+                        </label>
+                        <input
+                          type="email"
+                          value={applicationForm.email}
+                          onChange={(e) => setApplicationForm({...applicationForm, email: e.target.value})}
+                          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Téléphone
+                      </label>
+                      <input
+                        type="tel"
+                        value={applicationForm.phone}
+                        onChange={(e) => setApplicationForm({...applicationForm, phone: e.target.value})}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Message de motivation
+                      </label>
+                      <textarea
+                        value={applicationForm.message}
+                        onChange={(e) => setApplicationForm({...applicationForm, message: e.target.value})}
+                        rows={4}
+                        placeholder="Expliquez pourquoi vous êtes intéressé(e) par cette mission..."
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        CV (PDF uniquement, max 10MB)
+                      </label>
+                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                        <div className="space-y-1 text-center">
+                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                          <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                            <label
+                              htmlFor="cv-upload"
+                              className="relative cursor-pointer rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500"
+                            >
+                              <span>Télécharger un fichier</span>
+                              <input
+                                id="cv-upload"
+                                name="cv-upload"
+                                type="file"
+                                accept=".pdf"
+                                className="sr-only"
+                                onChange={(e) => setApplicationForm({...applicationForm, cv: e.target.files[0]})}
+                              />
+                            </label>
+                            <p className="pl-1">ou glisser-déposer</p>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            PDF jusqu'à 10MB
+                          </p>
+                          {applicationForm.cv && (
+                            <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                              ✓ {applicationForm.cv.name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowApplicationForm(false);
+                          setApplicationForm({ name: '', email: '', phone: '', message: '', cv: null });
+                        }}
+                        className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Envoi en cours...
+                          </>
+                        ) : (
+                          <>
+                            Envoyer ma candidature
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
             </div>
 
             {/* Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sticky top-4">
+            <div className="lg:col-span-1 space-y-6">
+              {/* Informations sur l'entreprise */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  Informations
+                  À propos de l'entreprise
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center text-gray-600 dark:text-gray-300">
@@ -209,11 +449,48 @@ const MissionDetailPageTest = ({ darkMode }) => {
                     <span>Publié le {new Date(job.posted_date).toLocaleDateString('fr-FR')}</span>
                   </div>
                 </div>
+              </div>
 
-                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    💡 Pour le moment, utilisez le bouton "Postuler" sur la page des missions pour candidater.
+              {/* CTA sticky */}
+              <div className="sticky top-4">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
+                  <h3 className="text-xl font-bold mb-4">
+                    Intéressé(e) par cette mission ?
+                  </h3>
+                  <p className="mb-6">
+                    Ne manquez pas cette opportunité ! Postulez dès maintenant.
                   </p>
+                  <button
+                    onClick={scrollToForm}
+                    className="w-full px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                  >
+                    Postuler maintenant
+                  </button>
+                </div>
+
+                {/* Partage */}
+                <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Partager cette mission
+                  </h4>
+                  <div className="flex space-x-3">
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 px-4 py-2 bg-blue-700 text-white rounded-lg text-center hover:bg-blue-800 transition-colors"
+                    >
+                      LinkedIn
+                    </a>
+                    <a
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(job.title + ' chez ' + job.company)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 px-4 py-2 bg-sky-500 text-white rounded-lg text-center hover:bg-sky-600 transition-colors"
+                    >
+                      Twitter
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -224,4 +501,4 @@ const MissionDetailPageTest = ({ darkMode }) => {
   );
 };
 
-export default MissionDetailPageTest;
+export default MissionDetailPage;
