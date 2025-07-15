@@ -170,7 +170,7 @@ const MissionsPage = ({ darkMode }) => {
                 {filteredJobs.map((job, index) => (
                   <div
                     key={job.id}
-                    className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in cursor-pointer ${
+                    className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in cursor-pointer mission-card overflow-hidden flex flex-col ${
                       job.featured ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''
                     }`}
                     style={{ animationDelay: `${index * 100}ms` }}
@@ -181,42 +181,44 @@ const MissionsPage = ({ darkMode }) => {
                   >
                     {job.featured && (
                       <div className="flex items-center mb-4">
-                        <Sparkles className="w-4 h-4 text-yellow-500 mr-2" />
-                        <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                        <Sparkles className="w-4 h-4 text-yellow-500 mr-2 flex-shrink-0" />
+                        <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400 truncate">
                           Mission en vedette
                         </span>
                       </div>
                     )}
                     
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 break-words hyphens-auto">
                       {job.title}
                     </h3>
                     
-                    <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
-                      <Building className="w-4 h-4 mr-2" />
-                      <span>{job.company}</span>
+                    <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2 min-w-0">
+                      <Building className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{job.company}</span>
                     </div>
                     
-                    <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span>{job.location}</span>
+                    <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4 min-w-0">
+                      <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{job.location}</span>
                     </div>
                     
-                    <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-3">
+                    <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-3 job-description">
                       {job.description}
                     </p>
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Euro className="w-4 h-4 text-green-600 dark:text-green-400 mr-1" />
-                        <span className="font-semibold text-green-600 dark:text-green-400">
-                          {job.salary} {job.salary_type}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center text-blue-600 dark:text-blue-400">
-                        <span className="text-sm font-medium">Voir détails</span>
-                        <ArrowRight className="w-4 h-4 ml-1" />
+                    <div className="mt-auto">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center min-w-0">
+                          <Euro className="w-4 h-4 text-green-600 dark:text-green-400 mr-1 flex-shrink-0" />
+                          <span className="font-semibold text-green-600 dark:text-green-400 truncate">
+                            {job.salary} {job.salary_type}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center text-blue-600 dark:text-blue-400">
+                          <span className="text-sm font-medium whitespace-nowrap">Voir détails</span>
+                          <ArrowRight className="w-4 h-4 ml-1" />
+                        </div>
                       </div>
                     </div>
                     
