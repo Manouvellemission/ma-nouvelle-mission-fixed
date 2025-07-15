@@ -1,5 +1,5 @@
 // api/sitemap.js - Génère dynamiquement le sitemap avec toutes les missions
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 // Initialiser Supabase
 const supabase = createClient(
@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.VITE_SUPABASE_ANON_KEY
 );
 
-export default async function handler(req, res) {
+exports.handler = async (event, context) => {
   try {
     // Récupérer toutes les missions actives
     const { data: jobs, error } = await supabase
@@ -55,10 +55,15 @@ export default async function handler(req, res) {
   </url>`).join('')}
 </urlset>`;
 
-    // Envoyer la réponse avec le bon content-type
-    res.setHeader('Content-Type', 'application/xml');
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate'); // Cache 1h
-    res.status(200).send(sitemap);
+    // Retourner la réponse
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 's-maxage=3600, stale-while-revalidate'
+      },
+      body: sitemap
+    };
     
   } catch (error) {
     console.error('Erreur génération sitemap:', error);
@@ -74,7 +79,12 @@ export default async function handler(req, res) {
   </url>
 </urlset>`;
     
-    res.setHeader('Content-Type', 'application/xml');
-    res.status(200).send(fallbackSitemap);
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/xml'
+      },
+      body: fallbackSitemap
+    };
   }
-}
+};
