@@ -1269,10 +1269,6 @@ const JobBoardContent = () => {
                         disabled={isSubmitting}
                       >
                         <option value="Mission">Mission</option>
-                        <option value="CDI">CDI</option>
-                        <option value="CDD">CDD</option>
-                        <option value="Freelance">Freelance</option>
-                        <option value="Stage">Stage</option>
                       </select>
                     </div>
                     
