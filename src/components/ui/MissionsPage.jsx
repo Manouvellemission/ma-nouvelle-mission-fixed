@@ -192,6 +192,15 @@ const MissionsPage = ({ darkMode }) => {
                       {job.title}
                     </h3>
                     
+                    {/* LIEN TEST - À retirer après validation */}
+                    <Link 
+                      to={`/mission/${job.slug}`}
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline block mb-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      🧪 Voir la page dédiée (TEST)
+                    </Link>
+                    
                     <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
                       <Building className="w-4 h-4 mr-2" />
                       <span>{job.company}</span>
