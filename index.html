@@ -3,6 +3,17 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+   
+        <!-- Compatibilité navigateurs -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- Polyfills pour compatibilité -->
+    <script>
+      // Fix pour Firefox et Safari
+      if (!CSS.supports('-webkit-line-clamp', '3')) {
+        document.documentElement.classList.add('no-line-clamp');
+      }
+    </script>
     
     <!-- SEO : Titre et Description pour Google -->
     <title>Ma Nouvelle Mission - Missions Pour Freelance</title>
