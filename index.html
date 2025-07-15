@@ -42,7 +42,7 @@
     <link rel="canonical" href="https://manouvellemission.com">
 </head>
 <body>
-    <!-- Formulaire caché pour Netlify - DOIT ÊTRE ICI -->
+    <!-- Formulaire caché pour Netlify - Candidatures -->
     <form name="job-application" netlify netlify-honeypot="bot-field" hidden>
         <input type="text" name="name" />
         <input type="email" name="email" />
@@ -53,9 +53,19 @@
         <input type="text" name="location" />
         <input type="file" name="cv" />
     </form>
+
+    <!-- Formulaire caché pour Netlify - Contact Entreprises -->
+    <form name="company-contact" netlify netlify-honeypot="bot-field" hidden>
+        <input type="text" name="name" />
+        <input type="email" name="email" />
+        <input type="text" name="company" />
+        <input type="tel" name="phone" />
+        <input type="text" name="plan" />
+        <textarea name="message"></textarea>
+        <input type="checkbox" name="needsHelp" />
+    </form>
     
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
-
