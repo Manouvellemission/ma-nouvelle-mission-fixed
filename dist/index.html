@@ -3,6 +3,17 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+   
+        <!-- Compatibilité navigateurs -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- Polyfills pour compatibilité -->
+    <script>
+      // Fix pour Firefox et Safari
+      if (!CSS.supports('-webkit-line-clamp', '3')) {
+        document.documentElement.classList.add('no-line-clamp');
+      }
+    </script>
     
     <!-- SEO : Titre et Description pour Google -->
     <title>Ma Nouvelle Mission - Missions Pour Freelance</title>
@@ -29,22 +40,32 @@
     <meta name="author" content="Ma Nouvelle Mission by Get in Talent">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://manouvellemission.com">
-  <script type="module" crossorigin src="/assets/index--Q7qvb09.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-90XcnVyb.css">
 </head>
 <body>
-    <!-- Formulaire caché pour Netlify - DOIT ÊTRE ICI -->
+    <!-- Formulaire caché pour Netlify - Candidatures -->
     <form name="job-application" netlify netlify-honeypot="bot-field" hidden>
         <input type="text" name="name" />
         <input type="email" name="email" />
+        <input type="tel" name="phone" />
         <textarea name="message"></textarea>
         <input type="text" name="jobTitle" />
         <input type="text" name="company" />
         <input type="text" name="location" />
         <input type="file" name="cv" />
     </form>
+
+    <!-- Formulaire caché pour Netlify - Contact Entreprises -->
+    <form name="company-contact" netlify netlify-honeypot="bot-field" hidden>
+        <input type="text" name="name" />
+        <input type="email" name="email" />
+        <input type="text" name="company" />
+        <input type="tel" name="phone" />
+        <input type="text" name="plan" />
+        <textarea name="message"></textarea>
+        <input type="checkbox" name="needsHelp" />
+    </form>
     
     <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
-
