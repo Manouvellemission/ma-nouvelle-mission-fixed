@@ -874,7 +874,7 @@ const JobBoardContent = () => {
                       <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Building className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                       </div>
-                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">200+</div>
+                      <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">20+</div>
                       <div className="text-gray-600 dark:text-gray-300">Entreprises partenaires</div>
                     </div>
                     <div className="text-center animate-fade-in animation-delay-400">
@@ -1056,7 +1056,7 @@ const JobBoardContent = () => {
                 </div>
                 <p className="text-gray-300 mb-6 leading-relaxed">
                   La plateforme de référence pour connecter les talents avec les meilleures 
-                  opportunités professionnelles. Propulsé par Get in Talent.
+                  opportunités professionnelles. Propulsé par Get in Talent & Adefree.
                 </p>
                 <div className="flex space-x-4">
                   <a href="mailto:hello@getintalent.fr" className="text-gray-400 hover:text-white transition-colors">
