@@ -31,8 +31,8 @@ const AboutPage = () => {
               <span className="block text-yellow-300">Ma Nouvelle Mission</span>
             </h1>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
-              Votre plateforme de référence pour trouver les meilleures opportunités professionnelles 
-              et connecter les talents avec les entreprises innovantes.
+              Votre jobboard de référence pour trouver les meilleures missions freelances 
+              et connecter les freelances avec les entreprises innovantes.
             </p>
           </div>
         </div>
@@ -47,8 +47,8 @@ const AboutPage = () => {
               Notre Mission
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
-              Révolutionner le marché de l'emploi en créant des connexions authentiques entre 
-              les professionnels talentueux et les entreprises visionnaires. Nous croyons que 
+              Révolutionner le marché des missions freelances en créant des connexions authentiques entre 
+              les freelances talentueux et les entreprises visionnaires. Nous croyons que 
               chaque carrière mérite d'être exceptionnelle.
             </p>
           </div>
@@ -56,15 +56,15 @@ const AboutPage = () => {
           {/* Statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div className="text-center p-8 bg-blue-50 dark:bg-gray-700 rounded-2xl">
-              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">500+</div>
+              <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">89+</div>
               <div className="text-gray-600 dark:text-gray-300">Missions publiées</div>
             </div>
             <div className="text-center p-8 bg-purple-50 dark:bg-gray-700 rounded-2xl">
-              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">1000+</div>
+              <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-2">787+</div>
               <div className="text-gray-600 dark:text-gray-300">Candidats actifs</div>
             </div>
             <div className="text-center p-8 bg-green-50 dark:bg-gray-700 rounded-2xl">
-              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">200+</div>
+              <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-2">20+</div>
               <div className="text-gray-600 dark:text-gray-300">Entreprises partenaires</div>
             </div>
           </div>
@@ -88,7 +88,7 @@ const AboutPage = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Excellence</h3>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                Nous nous engageons à fournir une plateforme de qualité supérieure avec 
+                Nous nous engageons à fournir une plateforme de qualité avec 
                 des fonctionnalités innovantes et une expérience utilisateur exceptionnelle.
               </p>
             </div>
@@ -100,7 +100,7 @@ const AboutPage = () => {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Innovation</h3>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 Nous adoptons les dernières technologies pour créer des solutions 
-                modernes qui répondent aux besoins évolutifs du marché du travail.
+                modernes qui répondent aux besoins évolutifs des missions en freelance.
               </p>
             </div>
 
@@ -124,13 +124,14 @@ const AboutPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                Propulsé par Get in Talent
+                Propulsé par Get in Talent & Adefree
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-                Ma Nouvelle Mission est une initiative de Get in Talent, cabinet de conseil 
-                en recrutement spécialisé dans les métiers du digital et de la tech. 
+                Ma Nouvelle Mission est une initiative de Get in Talent & Adefree, cabinet de conseil 
+                en recrutement spécialisé dans les métiers du digital et de la tech et 
+                plateforme pour la gestion administrative automatique des freelances
                 Forte de plusieurs années d'expérience, notre équipe comprend les enjeux 
-                du marché et accompagne candidats et entreprises vers le succès.
+                du marché.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center">
@@ -153,18 +154,18 @@ const AboutPage = () => {
                   <Users className="w-10 h-10 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  Get in Talent
+                  Adefree
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Votre partenaire de confiance pour tous vos besoins en recrutement
+                  Vous êtes Freelance et l'administratif vous prend trop de temps ?
                 </p>
                 <a
-                  href="https://getintalent.fr"
+                  href="https://adefree.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Découvrir Get in Talent
+                  Découvrir Adefree
                   <ExternalLink className="w-4 h-4 ml-2" />
                 </a>
               </div>
