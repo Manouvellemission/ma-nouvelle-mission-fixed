@@ -849,11 +849,15 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
               {/* Logo et description */}
               <div className="md:col-span-2">
                 <div className="flex items-center mb-6">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                    <Briefcase className="w-6 h-6 text-white" />
-                  </div>
-                  <span className="text-2xl font-bold">Ma Nouvelle Mission</span>
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 overflow-hidden">
+                  <img 
+                    src="/logo-manouvellemission.png" 
+                    alt="Ma Nouvelle Mission" 
+                    className="w-10 h-10 object-contain"
+                  />
                 </div>
+                <span className="text-2xl font-bold">Ma Nouvelle Mission</span>
+              </div>
                 <p className="text-gray-300 mb-6 leading-relaxed">
                   Trouvez vos missions sur Ma Nouvelle Mission, gérez-les avec Adefree. 
                   L'écosystème complet pour les freelances qui réussissent.
