@@ -40,6 +40,20 @@ exports.handler = async (event, context) => {
   </url>
   
   <url>
+    <loc>https://manouvellemission.com/post-job</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://manouvellemission.com/outils-freelance</loc>
+    <lastmod>${currentDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>https://manouvellemission.com/about</loc>
     <lastmod>${currentDate}</lastmod>
     <changefreq>monthly</changefreq>
@@ -77,6 +91,20 @@ exports.handler = async (event, context) => {
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  
+  <url>
+    <loc>https://manouvellemission.com/missions</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <url>
+    <loc>https://manouvellemission.com/outils-freelance</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>`;
     
