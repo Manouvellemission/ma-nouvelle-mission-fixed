@@ -204,10 +204,10 @@ const AboutPage = () => {
               <Phone className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Téléphone</h3>
               <a 
-                href="tel:+33123456789" 
+                href="tel:+33972328994" 
                 className="text-green-600 dark:text-green-400 hover:underline"
               >
-                +33 1 23 45 67 89
+                +33 9 72 32 89 94
               </a>
             </div>
 
