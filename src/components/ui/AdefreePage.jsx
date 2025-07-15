@@ -745,16 +745,16 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
                         ))}
                       </ul>
                       
-                      <button
-                        onClick={() => plan.id === 'free' ? window.open('https://adefree.com', '_blank') : openContactForm(plan.id)}
-                        className={`w-full py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
-                          plan.popular
-                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        {plan.cta}
-                      </button>
+                    <button
+                      onClick={() => window.open('https://adefree.com/inscription', '_blank')}
+                      className={`w-full py-3 rounded-xl font-semibold transition-all hover:scale-105 ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {plan.cta}
+                    </button>
                     </div>
                   </div>
                 ))}
