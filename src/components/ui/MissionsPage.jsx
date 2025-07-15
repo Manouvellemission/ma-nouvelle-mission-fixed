@@ -1,7 +1,7 @@
-// src/components/ui/MissionsPage.jsx - VERSION AVEC DESIGN ALIGNÉ SUR LA PAGE D'ACCUEIL
+// src/components/ui/MissionsPage.jsx - VERSION AVEC NAVIGATION VERS PAGE DÉDIÉE
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Briefcase, Building, Euro, Filter, Sparkles, Users, ArrowLeft, CheckCircle, X, ArrowRight, Loader2, AlertTriangle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { fetchJobsPaginated } from '../../services/jobService';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -26,10 +26,9 @@ const MissionsPage = ({ darkMode }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
 
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Charger les missions avec pagination
   const loadJobs = async (page = 1) => {
@@ -174,10 +173,7 @@ const MissionsPage = ({ darkMode }) => {
                       job.featured ? 'ring-2 ring-yellow-400 dark:ring-yellow-500' : ''
                     }`}
                     style={{ animationDelay: `${index * 100}ms` }}
-                    onClick={() => {
-                      setSelectedJob(job);
-                      setShowApplicationForm(true);
-                    }}
+                    onClick={() => navigate(`/mission/${job.slug}`)}
                   >
                     {job.featured && (
                       <div className="flex items-center mb-4">
@@ -302,291 +298,9 @@ const MissionsPage = ({ darkMode }) => {
             </>
           )}
         </div>
-
-        {/* Modal de candidature - Même style que la page d'accueil */}
-        {showApplicationForm && selectedJob && (
-          <ApplicationModal 
-            job={selectedJob}
-            onClose={() => {
-              setShowApplicationForm(false);
-              setSelectedJob(null);
-            }}
-            darkMode={darkMode}
-          />
-        )}
       </div>
     </div>
   );
 };
-
-// Modal de candidature aligné avec le style de la page d'accueil
-function ApplicationModal({ job, onClose, darkMode }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
-    cv: null
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState(null);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      // Créer FormData pour Netlify
-      const netlifyData = new FormData();
-      
-      // Champs requis par Netlify
-      netlifyData.append('form-name', 'job-application');
-      
-      // Données du candidat
-      netlifyData.append('name', formData.name);
-      netlifyData.append('email', formData.email);
-      netlifyData.append('phone', formData.phone || '');
-      netlifyData.append('message', formData.message || '');
-      
-      // Infos sur la mission
-      netlifyData.append('jobTitle', job.title);
-      netlifyData.append('company', job.company);
-      netlifyData.append('location', job.location);
-      
-      // CV en pièce jointe
-      if (formData.cv) {
-        netlifyData.append('cv', formData.cv);
-      }
-
-      // Envoyer à Netlify Forms
-      const response = await fetch('/', {
-        method: 'POST',
-        body: netlifyData
-      });
-
-      if (response.ok) {
-        setSubmitMessage({
-          type: 'success',
-          text: '✅ Candidature envoyée avec succès !'
-        });
-        
-        // Fermer après 2 secondes
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      } else {
-        throw new Error('Erreur lors de l\'envoi');
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      setSubmitMessage({
-        type: 'error',
-        text: '❌ Erreur lors de l\'envoi de la candidature'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl my-8 max-h-[90vh] overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Postuler à cette mission
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Contenu */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {/* Info mission */}
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">
-                {job.title}
-              </h3>
-              <p className="text-blue-700 dark:text-blue-400 text-sm">
-                {job.company} • {job.location}
-              </p>
-            </div>
-
-            {/* Message de succès */}
-            {submitMessage && (
-              <div className={`mb-6 p-4 rounded-lg ${
-                submitMessage.type === 'success' 
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300' 
-                  : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
-              }`}>
-                <p>{submitMessage.text}</p>
-              </div>
-            )}
-
-            {/* Détails de la mission */}
-            <div className="mb-6 space-y-4">
-              <div>
-                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Description</h4>
-                <p className="text-gray-600 dark:text-gray-300">{job.description}</p>
-              </div>
-
-              {job.requirements && job.requirements.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Exigences</h4>
-                  <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1">
-                    {job.requirements.map((req, idx) => (
-                      <li key={idx}>{req}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {job.benefits && job.benefits.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Avantages</h4>
-                  <ul className="list-disc list-inside text-gray-600 dark:text-gray-300 space-y-1">
-                    {job.benefits.map((benefit, idx) => (
-                      <li key={idx}>{benefit}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Formulaire */}
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Nom complet *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Téléphone
-                </label>
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Message de motivation
-                </label>
-                <textarea
-                  value={formData.message}
-                  onChange={(e) => setFormData({...formData, message: e.target.value})}
-                  rows={4}
-                  placeholder="Expliquez pourquoi vous êtes intéressé(e) par cette mission..."
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  CV (PDF uniquement, max 10MB)
-                </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
-                  <div className="space-y-1 text-center">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                      <label
-                        htmlFor="cv-upload"
-                        className="relative cursor-pointer rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                      >
-                        <span>Télécharger un fichier</span>
-                        <input
-                          id="cv-upload"
-                          name="cv-upload"
-                          type="file"
-                          accept=".pdf"
-                          className="sr-only"
-                          onChange={(e) => setFormData({...formData, cv: e.target.files[0]})}
-                        />
-                      </label>
-                      <p className="pl-1">ou glisser-déposer</p>
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      PDF jusqu'à 10MB
-                    </p>
-                    {formData.cv && (
-                      <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                        ✓ {formData.cv.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </form>
-          </div>
-
-          {/* Footer */}
-          <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Envoi en cours...
-                  </>
-                ) : (
-                  <>
-                    Envoyer ma candidature
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default MissionsPage;
