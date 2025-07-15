@@ -974,13 +974,10 @@ const JobBoardContent = () => {
                           </div>
                           
                           <button
-                            onClick={() => {
-                              setSelectedJob(job);
-                              setShowApplicationForm(true);
-                            }}
+                            onClick={() => navigate(`/mission/${job.slug}`)}
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center whitespace-nowrap"
-                          >
-                            Postuler
+                                >
+                            Voir détails
                             <ArrowRight className="w-4 h-4 ml-2" />
                           </button>
                         </div>
