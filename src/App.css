@@ -152,46 +152,6 @@
   .no-print {
     display: none !important;
   }
-
-  /* ✅ CORRECTION POUR LES DESCRIPTIONS QUI DÉBORDENT */
-.job-description {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: break-word;
-  line-height: 1.5;
-  max-height: 4.5em; /* 3 lignes × 1.5 line-height */
-}
-
-/* Assurer que les cartes ont une hauteur cohérente */
-.mission-card {
-  min-height: 320px;
-  max-height: 320px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-/* Correction pour les titres longs aussi */
-.job-title {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.4;
-  max-height: 2.8em;
-}
-
-/* Correction pour les noms d'entreprise longs */
-.job-company {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
   
   .job-card {
     break-inside: avoid;
@@ -199,19 +159,70 @@
     border: 1px solid #e5e7eb;
   }
 }
+
 /* ============================================
-   CORRECTION COMPLETE POUR LE RESPONSIVE
+   STYLES COMPATIBLES TOUS NAVIGATEURS
    ============================================ */
 
-/* Empêcher tout débordement sur les cartes */
+/* Description avec support universel */
+.job-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  display: -moz-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  line-height: 1.5;
+  max-height: 4.5em;
+  position: relative;
+}
+
+/* Fallback pour navigateurs sans line-clamp */
+.no-line-clamp .job-description {
+  height: 4.5em;
+}
+
+.no-line-clamp .job-description::after {
+  content: "...";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  padding-left: 40px;
+  background: linear-gradient(to right, transparent, white 50%);
+}
+
+.dark .no-line-clamp .job-description::after {
+  background: linear-gradient(to right, transparent, rgb(31 41 55) 50%);
+}
+
+/* Titre compatible tous navigateurs */
+.job-title {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphens: auto;
+  overflow: hidden;
+}
+
+/* Cartes responsives */
 .mission-card {
   word-wrap: break-word;
   overflow-wrap: break-word;
-  hyphens: auto;
   overflow: hidden;
-  /* Retirer les hauteurs fixes pour plus de flexibilité */
+  display: flex;
+  display: -webkit-flex;
+  display: -moz-box;
+  display: -ms-flexbox;
+  flex-direction: column;
+  -webkit-flex-direction: column;
+  -moz-box-orient: vertical;
+  -moz-box-direction: normal;
+  -ms-flex-direction: column;
   min-height: auto;
-  max-height: none;
 }
 
 .mission-card * {
@@ -219,65 +230,177 @@
   max-width: 100%;
 }
 
-/* Grille responsive stable */
-@media (max-width: 768px) {
-  .mission-card {
-    min-width: 0;
-    width: 100%;
+/* Grille avec fallback flexbox */
+@supports not (display: grid) {
+  .grid {
+    display: -webkit-flex;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    margin: -1rem;
   }
   
-  /* Ajuster la description sur mobile */
-  .job-description {
-    -webkit-line-clamp: 2; /* Seulement 2 lignes sur mobile */
-    max-height: 3em;
+  .grid > * {
+    padding: 1rem;
+    -webkit-flex: 0 0 100%;
+    -ms-flex: 0 0 100%;
+    flex: 0 0 100%;
+  }
+  
+  @media (min-width: 768px) {
+    .md\:grid-cols-2 > * {
+      -webkit-flex: 0 0 50%;
+      -ms-flex: 0 0 50%;
+      flex: 0 0 50%;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .lg\:grid-cols-3 > * {
+      -webkit-flex: 0 0 33.333%;
+      -ms-flex: 0 0 33.333%;
+      flex: 0 0 33.333%;
+    }
   }
 }
 
-/* Override des styles existants pour la description */
-.job-description {
-  display: -webkit-box !important;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: break-word;
-  line-height: 1.5;
-  /* Pas de max-height fixe, laissons line-clamp gérer */
-}
-
-/* Titre responsive */
-.job-title {
-  word-break: break-word;
-  hyphens: auto;
-  overflow-wrap: break-word;
-  /* Retirer les limites de hauteur */
-  -webkit-line-clamp: none;
-  max-height: none;
-}
-
-/* Entreprise et localisation */
+/* Truncate universel */
+.truncate,
 .job-company,
 .mission-card .truncate {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  display: block;
+}
+
+/* Flex compatible */
+.flex {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+
+.items-center {
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+.justify-between {
+  -webkit-box-pack: justify;
+  -moz-box-pack: justify;
+  -ms-flex-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+}
+
+/* Boutons compatibles */
+.mission-card button {
+  white-space: nowrap;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Icônes */
+.mission-card svg {
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .mission-card {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  .job-description {
+    -webkit-line-clamp: 2;
+    max-height: 3em;
+  }
+  
+  .no-line-clamp .job-description {
+    height: 3em;
+  }
+}
+
+/* Fix spécifique Firefox */
+@-moz-document url-prefix() {
+  .job-description {
+    display: block;
+    overflow: hidden;
+    max-height: 4.5em;
+  }
+  
+  .mission-card {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* Fix pour Safari */
+@media not all and (min-resolution:.001dpcm) {
+  @supports (-webkit-appearance:none) {
+    .job-description {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+  }
+}
+
+/* Fix pour Edge Legacy */
+@supports (-ms-ime-align: auto) {
+  .mission-card {
+    min-height: auto;
+  }
+  
+  .job-description {
+    display: block;
+    max-height: 4.5em;
+    overflow: hidden;
+  }
+}
+
+/* Reset box-sizing pour tous les navigateurs */
+.mission-card,
+.mission-card * {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* Animations avec fallback */
+@supports not (animation: fadeIn 0.5s) {
+  .animate-fade-in {
+    opacity: 1 !important;
+  }
+  
+  .animate-slide-in {
+    opacity: 1 !important;
+  }
 }
 
 /* Conteneur flex pour le bas de carte */
 .mission-card .flex.items-center.justify-between {
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
-/* Bouton qui ne se coupe pas */
-.mission-card button {
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-/* S'assurer que les icônes ne rétrécissent pas */
-.mission-card svg {
-  flex-shrink: 0;
-}
-
