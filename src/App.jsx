@@ -1607,7 +1607,7 @@ const App = () => {
                     </Suspense>
                   } 
                 />
-                <Route 
+               <Route 
                   path="/about" 
                   element={
                     <Suspense fallback={
@@ -1627,7 +1627,7 @@ const App = () => {
                         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                       </div>
                     }>
-                      <MissionDetailPageTest darkMode={darkMode} />
+                      <MissionDetailPage darkMode={darkMode} />
                     </Suspense>
                   } 
                 />
