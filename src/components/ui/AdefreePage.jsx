@@ -147,7 +147,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
       price: '0€',
       period: 'HT/mois',
       description: 'Idéal pour débuter en freelance',
-      tagline: 'Ton 1er assistant, gratuit. Parce que la liberté commence par l'essentiel.',
+      tagline: `Ton 1er assistant, gratuit. Parce que la liberté commence par l'essentiel.`,      
       features: [
         'Tes factures faites et envoyées en 2 clics',
         'Gestion clients simplifiée',
