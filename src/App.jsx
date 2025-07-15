@@ -877,8 +877,8 @@ const JobBoardContent = () => {
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
                   <div className="text-center">
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 animate-fade-in">
-                      Trouvez votre
-                      <span className="block text-yellow-300">nouvelle mission</span>
+                      Freelance
+                      <span className="block text-yellow-300">Trouvez votre nouvelle mission</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto animate-fade-in animation-delay-200">
                       Découvrez les meilleures opportunités professionnelles et donnez un nouvel élan à votre carrière
