@@ -404,3 +404,16 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* Fix pour débordement texte */
+.line-clamp-3 {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.force-break {
+  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+}
