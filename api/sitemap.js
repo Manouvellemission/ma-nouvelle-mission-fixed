@@ -1,21 +1,22 @@
 // api/sitemap.js - Génère dynamiquement le sitemap avec toutes les missions
-const { createClient } = require('@supabase/supabase-js');
-
-// Initialiser Supabase
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY
-);
-
 exports.handler = async (event, context) => {
   try {
-    // Récupérer toutes les missions actives
-    const { data: jobs, error } = await supabase
-      .from('jobs')
-      .select('slug, updated_at')
-      .order('created_at', { ascending: false });
+    // Récupérer les missions via l'API REST de Supabase
+    const response = await fetch(
+      `${process.env.VITE_SUPABASE_URL}/rest/v1/jobs?select=slug,updated_at&order=created_at.desc`,
+      {
+        headers: {
+          'apikey': process.env.VITE_SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${process.env.VITE_SUPABASE_ANON_KEY}`
+        }
+      }
+    );
 
-    if (error) throw error;
+    if (!response.ok) {
+      throw new Error('Erreur lors de la récupération des jobs');
+    }
+
+    const jobs = await response.json();
 
     // Date actuelle pour les pages statiques
     const currentDate = new Date().toISOString().split('T')[0];
