@@ -199,4 +199,85 @@
     border: 1px solid #e5e7eb;
   }
 }
+/* ============================================
+   CORRECTION COMPLETE POUR LE RESPONSIVE
+   ============================================ */
+
+/* Empêcher tout débordement sur les cartes */
+.mission-card {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  overflow: hidden;
+  /* Retirer les hauteurs fixes pour plus de flexibilité */
+  min-height: auto;
+  max-height: none;
+}
+
+.mission-card * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Grille responsive stable */
+@media (max-width: 768px) {
+  .mission-card {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  /* Ajuster la description sur mobile */
+  .job-description {
+    -webkit-line-clamp: 2; /* Seulement 2 lignes sur mobile */
+    max-height: 3em;
+  }
+}
+
+/* Override des styles existants pour la description */
+.job-description {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  line-height: 1.5;
+  /* Pas de max-height fixe, laissons line-clamp gérer */
+}
+
+/* Titre responsive */
+.job-title {
+  word-break: break-word;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  /* Retirer les limites de hauteur */
+  -webkit-line-clamp: none;
+  max-height: none;
+}
+
+/* Entreprise et localisation */
+.job-company,
+.mission-card .truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Conteneur flex pour le bas de carte */
+.mission-card .flex.items-center.justify-between {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Bouton qui ne se coupe pas */
+.mission-card button {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* S'assurer que les icônes ne rétrécissent pas */
+.mission-card svg {
+  flex-shrink: 0;
+}
 
