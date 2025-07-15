@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building, MapPin, Euro, Briefcase, CheckCircle, Users, Calendar, Clock, Mail, Phone, Upload, X, ArrowRight, Loader2, ExternalLink } from 'lucide-react';
 import { jobService } from '../../services/jobService';
-import { Helmet } from 'react-helmet-async';
+import { Helmet } from 'react-helmet';
 
 const MissionDetailPage = ({ darkMode }) => {
   const { slug } = useParams();
