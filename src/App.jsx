@@ -1130,7 +1130,6 @@ const JobBoardContent = () => {
               {/* Logo et description */}
               <div className="md:col-span-2">
                 <div className="flex items-center mb-6">
-                  <div className="flex items-center mb-6">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 overflow-hidden">
                       <img 
                         src="/logo-manouvellemission.png" 
