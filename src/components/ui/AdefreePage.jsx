@@ -14,7 +14,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
   // États pour l'UI
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('standard');
+  const [selectedPlan, setSelectedPlan] = useState('copilote');
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [submitMessage, setSubmitMessage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,7 +27,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
     email: '',
     company: '',
     phone: '',
-    plan: 'standard',
+    plan: 'copilote',
     message: '',
     currentTool: '',
     needsDemo: false
@@ -143,56 +143,58 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
   const pricingPlans = [
     {
       id: 'free',
-      name: 'Gratuit',
+      name: 'Indépendant',
       price: '0€',
-      period: '/mois',
-      description: 'Pour commencer',
+      period: 'HT/mois',
+      description: 'Idéal pour débuter en freelance',
+      tagline: 'Ton 1er assistant, gratuit. Parce que la liberté commence par l'essentiel.',
       features: [
-        'Calculateur TJM illimité',
-        '5 factures/mois',
-        'Dashboard basique',
+        'Tes factures faites et envoyées en 2 clics',
+        'Gestion clients simplifiée',
+        'Mentions légales automatiques',
         'Support email'
       ],
       popular: false,
       color: 'gray',
-      cta: 'Commencer gratuitement'
+      cta: 'Démarrer Gratuitement',
+      trial: '30 JOURS d\'essai GRATUIT'
     },
     {
-      id: 'standard',
-      name: 'Standard',
-      price: '19€',
+      id: 'copilote',
+      name: 'Copilote',
+      price: '5€',
       period: 'HT/mois',
-      description: 'Le plus populaire',
+      description: 'La solution complète pour les freelances actifs',
+      tagline: 'Le minimum pour être au maximum. Tout sauf Basique, Simple.',
       features: [
-        'Facturation illimitée',
-        'Relances automatiques',
-        'Dashboard avancé',
-        'Gestion du temps',
-        'Support prioritaire',
-        'Templates premium'
+        'Un simulateur intelligent pour choisir ton statut, ton TJM et ton revenu net',
+        'Une gestion documentaire automatisée (Kbis, URSSAF, RC Pro, Contrat...)',
+        'Une facturation fluide, automatique et sans efforts',
+        'Toutes les fonctionnalités Indépendant'
       ],
       popular: true,
       color: 'blue',
-      cta: 'Essai gratuit 14 jours'
+      cta: 'Essayer Copilote',
+      trial: '30 JOURS d\'essai GRATUIT'
     },
     {
-      id: 'premium',
-      name: 'Premium',
-      price: '39€',
+      id: 'maitre',
+      name: 'Maître de l\'admin',
+      price: '20€',
       period: 'HT/mois',
-      description: 'Pour les pros',
+      description: 'L\'automatisation totale pour les indépendants exigeants',
+      tagline: 'Tu travailles de ton côté. Adefree orchestre. Et tout devient Simple, Basique.',
       features: [
-        'Toutes les fonctionnalités',
-        'Multi-entreprises',
-        'API & intégrations',
-        'Analytics avancés',
-        'Support téléphonique',
-        'Formation personnalisée',
-        'Accompagnement dédié'
+        'Relances clients automatiques, factures réglées, le cash qui rentre',
+        'Tableau de bord prédictif : trésorerie, URSSAF, TVA, échéances',
+        'Suivi de missions & contrats intégré (mini CRM)',
+        'Archivage intelligent, conformité garantie, zéro oubli',
+        'Rappels malins, alertes intelligentes, zéro charge mentale'
       ],
       popular: false,
       color: 'purple',
-      cta: 'Demander une démo'
+      cta: 'Essayer gratuitement',
+      trial: '30 JOURS d\'essai GRATUIT'
     }
   ];
 
@@ -314,7 +316,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
   };
 
   // Fonction pour ouvrir le formulaire avec un plan présélectionné
-  const openContactForm = (planId = 'standard') => {
+  const openContactForm = (planId = 'copilote') => {
     setSelectedPlan(planId);
     setContactForm(prev => ({ ...prev, plan: planId }));
     setShowContactForm(true);
@@ -684,7 +686,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
                   Choisissez votre plan
                 </h2>
                 <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                  Commencez gratuitement, passez au premium quand vous êtes prêt
+                  Commencez gratuitement avec Indépendant, évoluez vers Copilote quand vous êtes prêt
                 </p>
               </div>
 
@@ -714,7 +716,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
                         <p className="text-gray-600 dark:text-gray-300 mb-4">
                           {plan.description}
                         </p>
-                        <div className="flex items-baseline justify-center">
+                        <div className="flex items-baseline justify-center mb-4">
                           <span className="text-4xl font-bold text-gray-900 dark:text-white">
                             {plan.price}
                           </span>
@@ -722,13 +724,23 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
                             {plan.period}
                           </span>
                         </div>
+                        {plan.tagline && (
+                          <p className="text-sm italic text-gray-600 dark:text-gray-400 mb-4">
+                            {plan.tagline}
+                          </p>
+                        )}
+                        {plan.trial && (
+                          <div className="inline-flex items-center px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 text-xs font-medium rounded-full">
+                            {plan.trial}
+                          </div>
+                        )}
                       </div>
                       
                       <ul className="space-y-3 mb-8">
                         {plan.features.map((feature, fIndex) => (
-                          <li key={fIndex} className="flex items-center">
-                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" />
-                            <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+                          <li key={fIndex} className="flex items-start">
+                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 mr-3 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{feature}</span>
                           </li>
                         ))}
                       </ul>
