@@ -9,7 +9,7 @@ import './App.css';
 // Lazy loading des pages
 const MissionsPage = lazy(() => import('./components/ui/MissionsPage'));
 const AboutPage = lazy(() => import('./components/ui/AboutPage'));
-const MissionDetailPageTest = lazy(() => import('./components/ui/MissionDetailPageTest'));
+const MissionDetailPage = lazy(() => import('./components/ui/MissionDetailPage'));
 
 // Context pour le thème
 const ThemeContext = createContext();
