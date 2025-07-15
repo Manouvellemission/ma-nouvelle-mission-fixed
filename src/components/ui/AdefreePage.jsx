@@ -97,17 +97,17 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
         "Simulation revenus nets"
       ],
       cta: "Calculer mon TJM",
-      link: "https://tjmfreelance.adefree.com/"
+      link: "https://tjmfreelance.com/"
     },
     {
       icon: <FileText className="w-12 h-12 text-green-600 dark:text-green-400" />,
       title: "Facturation & Devis Pro",
       description: "Créez des factures conformes en 1 clic. Relances automatiques, suivi des paiements et tableaux de bord intégrés.",
       benefits: [
-        "Templates personnalisables",
+        "Templates optimisés",
         "Mentions légales automatiques",
         "Relances intelligentes",
-        "Paiement en ligne"
+        "Facture envoyée en 2 clics"
       ],
       cta: "Essayer gratuitement",
       link: "https://adefree.com"
@@ -127,13 +127,13 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
     },
     {
       icon: <Clock className="w-12 h-12 text-orange-600 dark:text-orange-400" />,
-      title: "Gestion du Temps",
-      description: "Trackez vos heures par projet, générez automatiquement vos factures et optimisez votre rentabilité.",
+      title: "Conformité",
+      description: "Conformité légale, restez toujours à jours administrativement.",
       benefits: [
-        "Timer intégré",
-        "Suivi par projet/client",
-        "Facturation automatique",
-        "Analyse rentabilité"
+        "Kbis, Ursaff",
+        "Contrat, RC Pro",
+        "Gestion sécurisée",
+        "Rappels automatiques"
       ],
       cta: "Découvrir",
       link: "https://adefree.com"
@@ -199,7 +199,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
   ];
 
   const stats = [
-    { number: '1000+', label: 'Freelances actifs', icon: <Users className="w-6 h-6" /> },
+    { number: '50+', label: 'Freelances actifs', icon: <Users className="w-6 h-6" /> },
     { number: '5h', label: 'Économisées/semaine', icon: <Clock className="w-6 h-6" /> },
     { number: '30%', label: 'Revenus optimisés', icon: <TrendingUp className="w-6 h-6" /> },
     { number: '99.9%', label: 'Disponibilité', icon: <Shield className="w-6 h-6" /> }
@@ -207,21 +207,21 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
 
   const testimonials = [
     {
-      name: "Sophie Martin",
+      name: "Sophie M",
       role: "Développeuse React",
       avatar: "SM",
       content: "Adefree m'a fait gagner 5h par semaine sur ma gestion. Le calculateur TJM m'a permis d'augmenter mes tarifs de 20% !",
       rating: 5
     },
     {
-      name: "Thomas Dubois", 
+      name: "Thomas D", 
       role: "Designer UX/UI",
       avatar: "TD",
       content: "Interface ultra intuitive et fonctionnalités parfaites pour freelances. Les relances automatiques ont divisé mes impayés par 3.",
       rating: 5
     },
     {
-      name: "Marie Rousseau",
+      name: "Marie R",
       role: "Consultante Marketing",
       avatar: "MR", 
       content: "Le dashboard temps réel est un game-changer. Je pilote enfin mon activité avec de vrais indicateurs !",
@@ -236,15 +236,15 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
     },
     {
       question: "Puis-je essayer Adefree gratuitement ?",
-      answer: "Absolument ! Nous offrons 14 jours d'essai gratuit sans carte bancaire pour tester toutes les fonctionnalités premium."
+      answer: "Absolument ! Nous offrons 30 jours d'essai gratuit pour tester toutes les fonctionnalités premium."
     },
     {
       question: "Adefree est-il conforme à la législation française ?",
       answer: "Oui, Adefree intègre automatiquement toutes les mentions légales obligatoires et est certifié conforme à la loi anti-fraude TVA."
     },
     {
-      question: "Puis-je importer mes données depuis mon outil actuel ?",
-      answer: "Oui, nous proposons un service d'import gratuit depuis la plupart des outils de facturation. Notre équipe vous accompagne dans la migration."
+      question: "À qui s'adresse Adefree ?",
+      answer: "Adefree s’adresse à tous les indépendants qui veulent gagner du temps, réduire leur charge mentale, et automatiser leur gestion administrative sans prise de tête."
     },
     {
       question: "Y a-t-il des frais cachés ?",
@@ -410,7 +410,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
 
                 {/* CTA Header */}
                 <a
-                  href="https://tjmfreelance.adefree.com/"
+                  href="https://tjmfreelance.com/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hidden md:flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -469,7 +469,7 @@ const AdefreePage = ({ darkMode: propDarkMode }) => {
                   À propos
                 </Link>
                 <a
-                  href="https://tjmfreelance.adefree.com/"
+                  href="https://tjmfreelance.com/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
