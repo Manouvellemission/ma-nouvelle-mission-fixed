@@ -393,6 +393,24 @@ const JobBoardContent = () => {
     setEditingJob(null);
   }, []);
 
+  // Fonction de nettoyage automatique du texte
+const cleanText = (text) => {
+  if (!text) return '';
+  
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1') // **texte** → texte
+    .replace(/\*(.*?)\*/g, '$1')     // *texte* → texte
+    .replace(/__(.*?)__/g, '$1')     // __texte__ → texte
+    .replace(/_(.*?)_/g, '$1')       // _texte_ → texte
+    .replace(/[""]/g, '"')           // Guillemets courbes → droits
+    .replace(/['']/g, "'")           // Apostrophes courbes → droites
+    .replace(/…/g, '...')            // Points de suspension
+    .replace(/–/g, '-')              // Tiret long → tiret court
+    .replace(/—/g, '-')              // Tiret cadratin → tiret court
+    .replace(/\s+/g, ' ')            // Espaces multiples → un seul
+    .replace(/\n\s*\n/g, '\n\n')     // Lignes vides multiples → max 2
+    .trim();                         // Supprimer espaces début/fin
+};
   // Fonction handleJobSubmit corrigée avec logs détaillés
   const handleJobSubmit = async () => {
     console.log('🚀 DEBUT handleJobSubmit');
@@ -402,18 +420,19 @@ const JobBoardContent = () => {
       await submitWithProgress(async () => {
         console.log('📝 Préparation des données...');
         const jobData = {
-          title: jobForm.title?.trim() || '',
-          company: jobForm.company?.trim() || '',
-          location: jobForm.location?.trim() || '',
+          title: cleanText(jobForm.title),
+          company: cleanText(jobForm.company),
+          location: cleanText(jobForm.location),
           type: jobForm.type,
-          salary: jobForm.salary,
-          salary_type: jobForm.type === 'CDI' || jobForm.type === 'CDD' ? 'Annuel' : 'TJM',
-          description: jobForm.description?.trim() || '',
-          requirements: jobForm.requirements.split('\n').filter(r => r.trim()),
-          benefits: jobForm.benefits.split('\n').filter(b => b.trim()),
-          slug: generateSlug(jobForm.title || '', jobForm.location || ''),
-          featured: jobForm.featured,
-          posted_date: new Date().toISOString().split('T')[0]
+          salary: cleanText(jobForm.salary),
+          salary_type: 'TJM',
+          description: cleanText(jobForm.description),
+          requirements: cleanText(jobForm.requirements).split('\n').filter(r => r.trim()),
+          benefits: cleanText(jobForm.benefits).split('\n').filter(b => b.trim()),
+          slug: generateSlug(cleanText(jobForm.title), cleanText(jobForm.location)),
+          featured: Boolean(jobForm.featured),
+          posted_date: new Date().toISOString().split('T')[0],
+          created_at: new Date().toISOString()
         };
 
         console.log('🔍 Validation...');
