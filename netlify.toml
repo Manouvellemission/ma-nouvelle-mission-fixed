@@ -2,25 +2,28 @@
   command = "pnpm install && pnpm run build"
   publish = "dist"
 
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
+# Configuration des fonctions serverless
+[functions]
+  directory = "api"
 
+# Redirection pour le sitemap dynamique (doit être AVANT le catch-all)
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/api/sitemap"
+  status = 200
+  force = true
+
+# Redirection pour les API
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Catch-all pour le SPA (doit être APRÈS les redirects spécifiques)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Plugin pour générer le sitemap
-[[plugins]]
-  package = "@netlify/plugin-sitemap"
-  
-  [plugins.inputs]
-    buildDir = "dist"
-    exclude = ["/success"]
 
 # Headers de sécurité
 [[headers]]
@@ -57,4 +60,3 @@
 [forms]
   # Activer les formulaires Netlify
   enabled = true
-
