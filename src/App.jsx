@@ -1,4 +1,4 @@
-// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION CORRIGÉE)
+// src/App.jsx - Application principale Ma Nouvelle Mission (VERSION AVEC POSTJOBPAGE)
 import React, { useState, useEffect, useCallback, useMemo, Suspense, useReducer, createContext, useContext, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, MapPin, Briefcase, Menu, X, Plus, Edit, Trash2, LogIn, LogOut, Building, Euro, Filter, Sparkles, TrendingUp, Users, Moon, Sun, ArrowRight, CheckCircle, RefreshCw, Loader2, AlertTriangle, ExternalLink, Mail, Phone, Upload } from 'lucide-react';
@@ -10,6 +10,7 @@ import './App.css';
 const MissionsPage = lazy(() => import('./components/ui/MissionsPage'));
 const AboutPage = lazy(() => import('./components/ui/AboutPage'));
 const MissionDetailPage = lazy(() => import('./components/ui/MissionDetailPage'));
+const PostJobPage = lazy(() => import('./components/ui/PostJobPage'));
 
 // Context pour le thème
 const ThemeContext = createContext();
@@ -688,6 +689,9 @@ const JobBoardContent = () => {
                 <Link to="/missions" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   Missions
                 </Link>
+                <Link to="/post-job" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  Publier
+                </Link>
                 <Link to="/about" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   À propos
                 </Link>
@@ -770,6 +774,13 @@ const JobBoardContent = () => {
                   Missions
                 </Link>
                 <Link
+                  to="/post-job"
+                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Publier
+                </Link>
+                <Link
                   to="/about"
                   className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                   onClick={() => setShowMobileMenu(false)}
@@ -848,11 +859,11 @@ const JobBoardContent = () => {
                         Explorer les missions
                       </Link>
                       <Link
-                        to="/about"
+                        to="/post-job"
                         className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-semibold hover:bg-white hover:text-blue-600 transition-all hover:scale-105"
                       >
-                        <Users className="w-5 h-5 mr-2" />
-                        En savoir plus
+                        <Plus className="w-5 h-5 mr-2" />
+                        Publier une annonce
                       </Link>
                     </div>
                   </div>
@@ -1080,6 +1091,11 @@ const JobBoardContent = () => {
                   <li>
                     <Link to="/missions" className="text-gray-300 hover:text-white transition-colors">
                       Missions
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/post-job" className="text-gray-300 hover:text-white transition-colors">
+                      Publier
                     </Link>
                   </li>
                   <li>
@@ -1601,6 +1617,18 @@ const App = () => {
                       </div>
                     }>
                       <MissionsPage darkMode={darkMode} />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="/post-job" 
+                  element={
+                    <Suspense fallback={
+                      <div className="min-h-screen flex items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                      </div>
+                    }>
+                      <PostJobPage darkMode={darkMode} />
                     </Suspense>
                   } 
                 />
