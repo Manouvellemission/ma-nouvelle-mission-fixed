@@ -668,19 +668,23 @@ const JobBoardContent = () => {
           </div>
         )}
 
-        {/* Header */}
-        <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              {/* Logo */}
-              <Link to="/" className="flex items-center space-x-3 group">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Briefcase className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Ma Nouvelle Mission
-                </span>
-              </Link>
+      {/* Header */}
+          <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                {/* Logo */}
+                <Link to="/" className="flex items-center space-x-3 group">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform overflow-hidden">
+                    <img 
+                      src="/logo-manouvellemission.png" 
+                      alt="Ma Nouvelle Mission" 
+                      className="w-10 h-10 object-contain"
+                    />
+                  </div>
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    Ma Nouvelle Mission
+                  </span>
+                </Link>
 
               {/* Navigation Desktop */}
               <nav className="hidden md:flex items-center space-x-8">
