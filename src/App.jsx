@@ -91,12 +91,12 @@ const useJobsData = () => {
   return { ...state, fetchJobs, dispatch };
 };
 
-// Hook pour le formulaire avec timeout et progress
+/// Hook pour le formulaire avec timeout et progress
 const useJobForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  const submitWithProgress = useCallback(async (submitFunction) => {
+  const submitWithProgress = useCallback(async (submitFunction) => {  // ← AJOUTÉ: async
     setIsSubmitting(true);
     setProgress(0);
 
@@ -105,7 +105,7 @@ const useJobForm = () => {
     }, 200);
 
     try {
-      const result = await submitFunction();
+      const result = await submitFunction();  // ← AJOUTÉ: await
       setProgress(100);
       clearInterval(progressInterval);
       
