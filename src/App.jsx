@@ -416,49 +416,105 @@ const cleanText = (text) => {
       .replace(/\s+/g, ' ')                // Espaces multiples → un seul
       .replace(/\n\s*\n/g, '\n\n')         // Lignes vides multiples → max 2
       .trim();                             // Supprimer espaces début/fin
-  } catch (error) {
+    
+      } catch (error) {
     console.warn('⚠️ Erreur cleanText pour:', text?.substring(0, 50), error);
     return text; // Retourner le texte original en cas d'erreur
   }
 };
   
-  // Fonction handleJobSubmit corrigée avec logs détaillés
-  const handleJobSubmit = async () => {
-    console.log('🚀 DEBUT handleJobSubmit');
-    setSubmitMessage(null);
+// Fonction handleJobSubmit corrigée avec logs détaillés
+const handleJobSubmit = async () => {
+  console.log('🚀 DEBUT handleJobSubmit');
+  setSubmitMessage(null);
 
-    try {
-      await submitWithProgress(async () => {
-        console.log('📝 Préparation des données...');
-        const jobData = {
-          title: cleanText(jobForm.title),
-          company: cleanText(jobForm.company),
-          location: cleanText(jobForm.location),
-          type: jobForm.type,
-          salary: cleanText(jobForm.salary),
-          salary_type: 'TJM',
-          description: cleanText(jobForm.description),
-          requirements: cleanText(jobForm.requirements).split('\n').filter(r => r.trim()),
-          benefits: cleanText(jobForm.benefits).split('\n').filter(b => b.trim()),
-          slug: generateSlug(cleanText(jobForm.title), cleanText(jobForm.location)),
-          featured: Boolean(jobForm.featured),
-          posted_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString()
-        };
+  try {
+    await submitWithProgress(async () => {
+      console.log('📝 Préparation des données...');
+      const jobData = {
+        title: cleanText(jobForm.title),
+        company: cleanText(jobForm.company),
+        location: cleanText(jobForm.location),
+        type: jobForm.type,
+        salary: cleanText(jobForm.salary),
+        salary_type: 'TJM',
+        description: cleanText(jobForm.description),
+        requirements: cleanText(jobForm.requirements).split('\n').filter(r => r.trim()),
+        benefits: cleanText(jobForm.benefits).split('\n').filter(b => b.trim()),
+        slug: generateSlug(cleanText(jobForm.title), cleanText(jobForm.location)),
+        featured: Boolean(jobForm.featured),
+        posted_date: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString()
+      };
 
-        console.log('🔍 Validation...');
-        const errors = validateJobData(jobData);
-        if (Object.keys(errors).length > 0) {
-          setSubmitMessage({
-            type: 'error',
-            text: 'Erreurs de validation:\n' + Object.values(errors).join('\n')
-          });
-          return;
+      console.log('🔍 Validation...');
+      const errors = validateJobData(jobData);
+      if (Object.keys(errors).length > 0) {
+        setSubmitMessage({
+          type: 'error',
+          text: 'Erreurs de validation:\n' + Object.values(errors).join('\n')
+        });
+        return;
+      }
+
+      const sanitizedData = sanitizeJobData(jobData);
+      console.log(editingJob ? '🛠️ Mise à jour...' : '➕ Création...');
+      console.log('📦 Données avant executeAction:', sanitizedData);
+
+      // UNE SEULE fonction executeAction avec logs
+      const executeAction = async () => {
+        console.log('🚀 DEBUT executeAction');
+        
+        if (editingJob) {
+          console.log('🔄 Appel updateJob avec ID:', editingJob.id);
+          await jobService.updateJob(editingJob.id, sanitizedData);
+          console.log('✅ updateJob terminé');
+          dispatch({ type: 'UPDATE_JOB', payload: { ...sanitizedData, id: editingJob.id } });
+          setSubmitMessage({ type: 'success', text: '✅ Mission mise à jour avec succès !' });
+        } else {
+          console.log('🔄 Appel createJob...');
+          const result = await jobService.createJob(sanitizedData);
+          console.log('✅ createJob terminé, résultat:', result);
+          dispatch({ type: 'ADD_JOB', payload: result.data });
+          setSubmitMessage({ type: 'success', text: '✅ Mission créée avec succès !' });
         }
+        
+        console.log('🎯 FIN executeAction');
+      };
 
-        const sanitizedData = sanitizeJobData(jobData);
+      // Exécuter avec session si disponible
+      if (executeWithValidSession) {
+        console.log('🔐 Exécution avec session validée...');
+        await executeWithValidSession(executeAction);
+      } else {
+        console.log('🔓 Exécution directe...');
+        await executeAction();
+      }
 
-        console.log(editingJob ? '🛠️ Mise à jour...' : '➕ Création...');
+      console.log('⏳ Pause de 500ms');
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log('🔄 Rafraîchissement des jobs...');
+      await fetchJobs();
+
+      console.log('🧹 Réinitialisation du formulaire');
+      resetFormState();
+
+      console.log('🪟 Fermeture du formulaire dans 2 secondes');
+      setTimeout(() => {
+        setShowJobForm(false);
+      }, 2000);
+    });
+  } catch (error) {
+    console.error('❌ ERREUR dans handleJobSubmit:', error);
+    setSubmitMessage({
+      type: 'error',
+      text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
+    });
+  }
+  
+  console.log('🔚 FIN handleJobSubmit');
+};
         
         // Utiliser executeWithValidSession si disponible
         const executeAction = async () => {
