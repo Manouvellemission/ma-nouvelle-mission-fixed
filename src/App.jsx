@@ -499,17 +499,32 @@ const handleJobSubmit = async () => {
           dispatch({ type: 'ADD_JOB', payload: result.data });
           setSubmitMessage({ type: 'success', text: '✅ Mission créée avec succès !' });
         }
-      }
-
-      console.log('⏳ Pause de 500ms');
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      console.log('🔄 Rafraîchissement des jobs...');
-      await fetchJobs();
-
-      console.log('
+            }
+            console.log('⏳ Pause de 500ms');
+            await new Promise(resolve => setTimeout(resolve, 500));
+      
+            console.log('🔄 Rafraîchissement des jobs...');
+            await fetchJobs();
+      
+      console.log('🧹 Réinitialisation du formulaire');
+            resetFormState();
+      
+            console.log('🪟 Fermeture du formulaire dans 2 secondes');
+            setTimeout(() => {
+              setShowJobForm(false);
+            }, 2000);
+          });
+        } catch (error) {
+          console.error('❌ ERREUR dans handleJobSubmit:', error);
+          setSubmitMessage({
+            type: 'error',
+            text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
+          });
+        }
         
-        // Utiliser executeWithValidSession si disponible
+        console.log('🔚 FIN handleJobSubmit');
+      };        
+              // Utiliser executeWithValidSession si disponible
         const executeAction = async () => {
           if (editingJob) {
             await jobService.updateJob(editingJob.id, sanitizedData);
