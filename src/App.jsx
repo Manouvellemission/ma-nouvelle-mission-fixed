@@ -423,8 +423,7 @@ const cleanText = (text) => {
   }
 };
   
-// FONCTION handleJobSubmit 
-
+// Fonction handleJobSubmit corrigée avec logs détaillés
 const handleJobSubmit = async () => {
   console.log('🚀 DEBUT handleJobSubmit');
   setSubmitMessage(null);
@@ -499,75 +498,33 @@ const handleJobSubmit = async () => {
           dispatch({ type: 'ADD_JOB', payload: result.data });
           setSubmitMessage({ type: 'success', text: '✅ Mission créée avec succès !' });
         }
-            }
-            console.log('⏳ Pause de 500ms');
-            await new Promise(resolve => setTimeout(resolve, 500));
-      
-            console.log('🔄 Rafraîchissement des jobs...');
-            await fetchJobs();
-      
+      }
+
+      console.log('⏳ Pause de 500ms');
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log('🔄 Rafraîchissement des jobs...');
+      await fetchJobs();
+
       console.log('🧹 Réinitialisation du formulaire');
-            resetFormState();
-      
-            console.log('🪟 Fermeture du formulaire dans 2 secondes');
-            setTimeout(() => {
-              setShowJobForm(false);
-            }, 2000);
-          });
-        } catch (error) {
-          console.error('❌ ERREUR dans handleJobSubmit:', error);
-          setSubmitMessage({
-            type: 'error',
-            text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
-          });
-        }
-        
-        console.log('🔚 FIN handleJobSubmit');
-      };        
-              // Utiliser executeWithValidSession si disponible
-        const executeAction = async () => {
-          if (editingJob) {
-            await jobService.updateJob(editingJob.id, sanitizedData);
-            dispatch({ type: 'UPDATE_JOB', payload: { ...sanitizedData, id: editingJob.id } });
-            setSubmitMessage({ type: 'success', text: '✅ Mission mise à jour avec succès !' });
-          } else {
-            const result = await jobService.createJob(sanitizedData);
-            dispatch({ type: 'ADD_JOB', payload: result.data });
-            setSubmitMessage({ type: 'success', text: '✅ Mission créée avec succès !' });
-          }
-        };
+      resetFormState();
 
-        if (executeWithValidSession) {
-          await executeWithValidSession(executeAction);
-        } else {
-          await executeAction();
-        }
-
-        console.log('⏳ Pause de 500ms');
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        console.log('🔄 Rafraîchissement des jobs...');
-        await fetchJobs();
-
-        console.log('🧹 Réinitialisation du formulaire');
-        resetFormState();
-
-        console.log('🪟 Fermeture du formulaire dans 2 secondes');
-        setTimeout(() => {
-          setShowJobForm(false);
-        }, 2000);
-      });
-    } catch (error) {
-      console.error('❌ ERREUR dans handleJobSubmit:', error);
-      setSubmitMessage({
-        type: 'error',
-        text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
-      });
-    }
-    
-    console.log('🔚 FIN handleJobSubmit');
-  };
-
+      console.log('🪟 Fermeture du formulaire dans 2 secondes');
+      setTimeout(() => {
+        setShowJobForm(false);
+      }, 2000);
+    });
+  } catch (error) {
+    console.error('❌ ERREUR dans handleJobSubmit:', error);
+    setSubmitMessage({
+      type: 'error',
+      text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
+    });
+  }
+  
+  console.log('🔚 FIN handleJobSubmit');
+};
+  
   // Fonction pour supprimer un job
   const deleteJob = async (id, title) => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la mission "${title}" ?\n\nCette action est irréversible.`)) {
