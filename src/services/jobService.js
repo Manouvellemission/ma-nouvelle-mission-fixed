@@ -1,6 +1,23 @@
 // src/services/jobService.js - Service de gestion des emplois avec fallback
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
+// ✅ FONCTION DÉFENSIVE POUR GÉRER TOUS LES FORMATS
+const ensureArray = (data) => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data.filter(item => item && item.trim());
+  if (typeof data === 'string') {
+    if (data.startsWith('{') && data.endsWith('}')) {
+      try {
+        return data.slice(1, -1).split('","').map(item => item.replace(/"/g, '').trim()).filter(Boolean);
+      } catch (e) {
+        return [data];
+      }
+    }
+    return data.split('\n').map(item => item.trim()).filter(Boolean);
+  }
+  return [String(data)];
+};
+
 // Données de fallback si Supabase n'est pas configuré
 const FALLBACK_JOBS = [
   {
@@ -119,14 +136,26 @@ export const jobService = {
     // Vérifier le cache d'abord
     if (jobsCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
       console.log('Utilisation du cache pour les jobs');
-      return jobsCache;
+      // ✅ NORMALISATION POUR L'AFFICHAGE
+      const normalizedJobs = jobsCache.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     }
 
     if (!isSupabaseConfigured()) {
       console.warn('Supabase non configuré, utilisation des données de fallback');
       jobsCache = FALLBACK_JOBS;
       cacheTimestamp = Date.now();
-      return FALLBACK_JOBS;
+      // ✅ NORMALISATION POUR L'AFFICHAGE
+      const normalizedJobs = FALLBACK_JOBS.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     }
 
     try {
@@ -145,18 +174,36 @@ export const jobService = {
       if (error) {
         console.error('Erreur Supabase:', error);
         // Retourner le cache si disponible, sinon fallback
-        return jobsCache || FALLBACK_JOBS;
+        const fallbackData = jobsCache || FALLBACK_JOBS;
+        const normalizedJobs = fallbackData.map(job => ({
+          ...job,
+          requirements: ensureArray(job.requirements),
+          benefits: ensureArray(job.benefits)
+        }));
+        return normalizedJobs;
       }
 
       // Mettre à jour le cache
       jobsCache = data || FALLBACK_JOBS;
       cacheTimestamp = Date.now();
       
-      return jobsCache;
+      // ✅ NORMALISATION POUR L'AFFICHAGE
+      const normalizedJobs = jobsCache.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     } catch (error) {
       console.error('Erreur lors de la récupération des jobs:', error);
       // Retourner le cache si disponible, sinon fallback
-      return jobsCache || FALLBACK_JOBS;
+      const fallbackData = jobsCache || FALLBACK_JOBS;
+      const normalizedJobs = fallbackData.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     }
   },
 
@@ -165,14 +212,26 @@ export const jobService = {
     // Vérifier le cache d'abord
     if (jobsCache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION)) {
       console.log('Utilisation du cache pour les jobs (avec signal)');
-      return jobsCache;
+      // ✅ NORMALISATION POUR L'AFFICHAGE
+      const normalizedJobs = jobsCache.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     }
 
     if (!isSupabaseConfigured()) {
       console.warn('Supabase non configuré, utilisation des données de fallback');
       jobsCache = FALLBACK_JOBS;
       cacheTimestamp = Date.now();
-      return FALLBACK_JOBS;
+      // ✅ NORMALISATION POUR L'AFFICHAGE
+      const normalizedJobs = FALLBACK_JOBS.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     }
 
     try {
@@ -185,20 +244,38 @@ export const jobService = {
 
       if (error) {
         console.error('Erreur Supabase:', error);
-        return jobsCache || FALLBACK_JOBS;
+        const fallbackData = jobsCache || FALLBACK_JOBS;
+        const normalizedJobs = fallbackData.map(job => ({
+          ...job,
+          requirements: ensureArray(job.requirements),
+          benefits: ensureArray(job.benefits)
+        }));
+        return normalizedJobs;
       }
 
       // Mettre à jour le cache
       jobsCache = data || FALLBACK_JOBS;
       cacheTimestamp = Date.now();
       
-      return jobsCache;
+      // ✅ NORMALISATION POUR L'AFFICHAGE
+      const normalizedJobs = jobsCache.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     } catch (error) {
       if (error.name === 'AbortError') {
         throw new Error('La requête a pris trop de temps');
       }
       console.error('Erreur lors de la récupération des jobs:', error);
-      return jobsCache || FALLBACK_JOBS;
+      const fallbackData = jobsCache || FALLBACK_JOBS;
+      const normalizedJobs = fallbackData.map(job => ({
+        ...job,
+        requirements: ensureArray(job.requirements),
+        benefits: ensureArray(job.benefits)
+      }));
+      return normalizedJobs;
     }
   },
 
@@ -209,79 +286,75 @@ export const jobService = {
   },
 
   // Créer une nouvelle mission
- async createJob(jobData) {
-  if (!isSupabaseConfigured()) {
-    throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
-  }
+  async createJob(jobData) {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Service de base de données non disponible. Veuillez contacter l\'administrateur.');
+    }
 
-  console.log('[jobService.createJob] Début création:', {
-    title: jobData.title,
-    timestamp: new Date().toISOString()
-  });
+    console.log('[jobService.createJob] Début création:', {
+      title: jobData.title,
+      timestamp: new Date().toISOString()
+    });
 
-  // Format propre
-  const cleanData = {
-    ...jobData,
-    requirements: Array.isArray(jobData.requirements)
-      ? jobData.requirements
-      : jobData.requirements.split('\n').filter(r => r.trim()),
-    benefits: Array.isArray(jobData.benefits)
-      ? jobData.benefits
-      : jobData.benefits.split('\n').filter(b => b.trim()),
-    applicants: jobData.applicants || 0,
-    created_at: new Date().toISOString()
-  };
+    // ✅ FORMAT CORRIGÉ - Envoi de strings à la base
+    const cleanData = {
+      ...jobData,
+      requirements: typeof jobData.requirements === 'string' ? jobData.requirements : '',
+      benefits: typeof jobData.benefits === 'string' ? jobData.benefits : '',
+      applicants: jobData.applicants || 0,
+      created_at: new Date().toISOString()
+    };
 
-  // Log du slug + taille du payload
-  const payloadSize = new Blob([JSON.stringify(cleanData)]).size;
-  console.log(`[jobService.createJob] Slug: ${cleanData.slug}`);
-  console.log(`[jobService.createJob] Taille du payload: ${payloadSize} octets`);
+    // Log du slug + taille du payload
+    const payloadSize = new Blob([JSON.stringify(cleanData)]).size;
+    console.log(`[jobService.createJob] Slug: ${cleanData.slug}`);
+    console.log(`[jobService.createJob] Taille du payload: ${payloadSize} octets`);
 
-  // Vérif duplication slug
-  const { data: existingSlug, error: slugCheckError } = await supabase
-    .from('jobs')
-    .select('id')
-    .eq('slug', cleanData.slug);
+    // Vérif duplication slug
+    const { data: existingSlug, error: slugCheckError } = await supabase
+      .from('jobs')
+      .select('id')
+      .eq('slug', cleanData.slug);
 
-  if (slugCheckError) {
-    console.error('[jobService.createJob] Erreur vérif slug:', slugCheckError);
-  }
+    if (slugCheckError) {
+      console.error('[jobService.createJob] Erreur vérif slug:', slugCheckError);
+    }
 
-  if (existingSlug && existingSlug.length > 0) {
-    throw new Error('Une mission avec ce titre (slug) existe déjà.');
-  }
-   
-  try {
-  console.log('[jobService.createJob] 🟡 Envoi de la requête Supabase...');
-  
-  const { data, error } = await supabase
-    .from('jobs')
-    .insert([cleanData])
-    .select();
+    if (existingSlug && existingSlug.length > 0) {
+      throw new Error('Une mission avec ce titre (slug) existe déjà.');
+    }
+     
+    try {
+      console.log('[jobService.createJob] 🟡 Envoi de la requête Supabase...');
+      
+      const { data, error } = await supabase
+        .from('jobs')
+        .insert([cleanData])
+        .select();
 
-  console.log('[jobService.createJob] 🟢 Réponse Supabase reçue:', { data, error });
+      console.log('[jobService.createJob] 🟢 Réponse Supabase reçue:', { data, error });
 
-  if (error) {
-    console.error('[jobService.createJob] 🔴 Erreur Supabase:', error);
-    throw new Error(error.message || 'Erreur inconnue Supabase');
-  }
+      if (error) {
+        console.error('[jobService.createJob] 🔴 Erreur Supabase:', error);
+        throw new Error(error.message || 'Erreur inconnue Supabase');
+      }
 
-  if (!data || data.length === 0) {
-    throw new Error('Aucune donnée retournée après insertion');
-  }
+      if (!data || data.length === 0) {
+        throw new Error('Aucune donnée retournée après insertion');
+      }
 
-  this.clearCache();
-  console.log('[jobService.createJob] ✅ Mission créée avec succès');
-  return { success: true, data: data[0] };
+      this.clearCache();
+      console.log('[jobService.createJob] ✅ Mission créée avec succès');
+      return { success: true, data: data[0] };
 
-} catch (error) {
-  console.error('[jobService.createJob] ❌ Erreur finale:', error);
-  if (error.name === 'AbortError') {
-    throw new Error('⏱ La requête Supabase a été annulée (délai dépassé)');
-  }
-  throw error;
-}
-},
+    } catch (error) {
+      console.error('[jobService.createJob] ❌ Erreur finale:', error);
+      if (error.name === 'AbortError') {
+        throw new Error('⏱ La requête Supabase a été annulée (délai dépassé)');
+      }
+      throw error;
+    }
+  },
 
   // Mettre à jour une mission
   async updateJob(id, jobData) {
@@ -296,15 +369,11 @@ export const jobService = {
     });
 
     try {
-      // S'assurer que les données sont correctement formatées
+      // ✅ FORMAT CORRIGÉ - Envoi de strings à la base
       const cleanData = {
         ...jobData,
-        requirements: Array.isArray(jobData.requirements) 
-          ? jobData.requirements 
-          : jobData.requirements.split('\n').filter(r => r.trim()),
-        benefits: Array.isArray(jobData.benefits)
-          ? jobData.benefits
-          : jobData.benefits.split('\n').filter(b => b.trim()),
+        requirements: typeof jobData.requirements === 'string' ? jobData.requirements : '',
+        benefits: typeof jobData.benefits === 'string' ? jobData.benefits : '',
         updated_at: new Date().toISOString()
       };
 
@@ -561,6 +630,3 @@ export const fetchJobsPaginated = async (page = 1, limit = 12) => {
     };
   }
 };
-
-
-
