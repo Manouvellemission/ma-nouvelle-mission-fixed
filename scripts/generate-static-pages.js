@@ -8,6 +8,21 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// ✅ FONCTION SÉCURISÉE POUR GÉRER TOUS LES FORMATS
+const safeParseArray = (field) => {
+  if (!field) return [];
+  if (Array.isArray(field)) return field.filter(item => item && item.trim());
+  if (typeof field === 'string') {
+    if (field.startsWith('{') && field.endsWith('}')) {
+      try {
+        return field.slice(1, -1).split('","').map(item => item.replace(/^"|"$/g, '').trim()).filter(item => item.length > 0);
+      } catch (e) { return [field]; }
+    }
+    return field.split('\n').map(item => item.trim()).filter(item => item.length > 0);
+  }
+  return [];
+};
+
 // Configuration Supabase - utilise les variables d'environnement Netlify
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
@@ -246,20 +261,20 @@ function generateJobPageHTML(job) {
                     <p style="white-space: pre-line;">${job.description}</p>
                 </div>
 
-                ${job.requirements && job.requirements.length > 0 ? `
+                ${safeParseArray(job.requirements).length > 0 ? `
                 <div class="section">
                     <h2>Compétences requises</h2>
                     <ul class="requirements">
-                        ${job.requirements.map(req => `<li>${req}</li>`).join('')}
+                        ${safeParseArray(job.requirements).map(req => `<li>${req}</li>`).join('')}
                     </ul>
                 </div>
                 ` : ''}
 
-                ${job.benefits && job.benefits.length > 0 ? `
+                ${safeParseArray(job.benefits).length > 0 ? `
                 <div class="section">
                     <h2>Avantages</h2>
                     <ul class="benefits">
-                        ${job.benefits.map(benefit => `<li>${benefit}</li>`).join('')}
+                        ${safeParseArray(job.benefits).map(benefit => `<li>${benefit}</li>`).join('')}
                     </ul>
                 </div>
                 ` : ''}
