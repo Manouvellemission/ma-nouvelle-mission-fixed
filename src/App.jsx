@@ -423,7 +423,8 @@ const cleanText = (text) => {
   }
 };
   
-// Fonction handleJobSubmit corrigée avec logs détaillés
+// FONCTION handleJobSubmit 
+
 const handleJobSubmit = async () => {
   console.log('🚀 DEBUT handleJobSubmit');
   setSubmitMessage(null);
@@ -459,36 +460,45 @@ const handleJobSubmit = async () => {
 
       const sanitizedData = sanitizeJobData(jobData);
       console.log(editingJob ? '🛠️ Mise à jour...' : '➕ Création...');
-      console.log('📦 Données avant executeAction:', sanitizedData);
+      console.log('📦 Données avant action:', sanitizedData);
 
-      // UNE SEULE fonction executeAction avec logs
-      const executeAction = async () => {
-        console.log('🚀 DEBUT executeAction');
+      // GESTION DIRECTE - UNE SEULE VERSION
+      if (editingJob) {
+        console.log('🔄 Appel updateJob avec ID:', editingJob.id);
         
-        if (editingJob) {
-          console.log('🔄 Appel updateJob avec ID:', editingJob.id);
+        if (executeWithValidSession) {
+          console.log('🔐 Update avec session validée...');
+          await executeWithValidSession(async () => {
+            await jobService.updateJob(editingJob.id, sanitizedData);
+            console.log('✅ updateJob terminé');
+            dispatch({ type: 'UPDATE_JOB', payload: { ...sanitizedData, id: editingJob.id } });
+            setSubmitMessage({ type: 'success', text: '✅ Mission mise à jour avec succès !' });
+          });
+        } else {
+          console.log('🔓 Update direct...');
           await jobService.updateJob(editingJob.id, sanitizedData);
           console.log('✅ updateJob terminé');
           dispatch({ type: 'UPDATE_JOB', payload: { ...sanitizedData, id: editingJob.id } });
           setSubmitMessage({ type: 'success', text: '✅ Mission mise à jour avec succès !' });
+        }
+      } else {
+        console.log('🔄 Appel createJob...');
+        
+        if (executeWithValidSession) {
+          console.log('🔐 Create avec session validée...');
+          await executeWithValidSession(async () => {
+            const result = await jobService.createJob(sanitizedData);
+            console.log('✅ createJob terminé, résultat:', result);
+            dispatch({ type: 'ADD_JOB', payload: result.data });
+            setSubmitMessage({ type: 'success', text: '✅ Mission créée avec succès !' });
+          });
         } else {
-          console.log('🔄 Appel createJob...');
+          console.log('🔓 Create direct...');
           const result = await jobService.createJob(sanitizedData);
           console.log('✅ createJob terminé, résultat:', result);
           dispatch({ type: 'ADD_JOB', payload: result.data });
           setSubmitMessage({ type: 'success', text: '✅ Mission créée avec succès !' });
         }
-        
-        console.log('🎯 FIN executeAction');
-      };
-
-      // Exécuter avec session si disponible
-      if (executeWithValidSession) {
-        console.log('🔐 Exécution avec session validée...');
-        await executeWithValidSession(executeAction);
-      } else {
-        console.log('🔓 Exécution directe...');
-        await executeAction();
       }
 
       console.log('⏳ Pause de 500ms');
@@ -497,24 +507,7 @@ const handleJobSubmit = async () => {
       console.log('🔄 Rafraîchissement des jobs...');
       await fetchJobs();
 
-      console.log('🧹 Réinitialisation du formulaire');
-      resetFormState();
-
-      console.log('🪟 Fermeture du formulaire dans 2 secondes');
-      setTimeout(() => {
-        setShowJobForm(false);
-      }, 2000);
-    });
-  } catch (error) {
-    console.error('❌ ERREUR dans handleJobSubmit:', error);
-    setSubmitMessage({
-      type: 'error',
-      text: '❌ ' + (error.message || 'Erreur lors de la sauvegarde')
-    });
-  }
-  
-  console.log('🔚 FIN handleJobSubmit');
-};
+      console.log('
         
         // Utiliser executeWithValidSession si disponible
         const executeAction = async () => {
