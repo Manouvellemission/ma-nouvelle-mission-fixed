@@ -252,17 +252,12 @@ export const jobService = {
   }
    
   try {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
-
   console.log('[jobService.createJob] 🟡 Envoi de la requête Supabase...');
   
   const { data, error } = await supabase
     .from('jobs')
-    .insert([cleanData], { signal: controller.signal })
+    .insert([cleanData])
     .select();
-
-  clearTimeout(timeout);
 
   console.log('[jobService.createJob] 🟢 Réponse Supabase reçue:', { data, error });
 
