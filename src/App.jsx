@@ -432,13 +432,13 @@ const handleJobSubmit = async () => {
     await submitWithProgress(async () => {
       console.log('📝 Préparation des données...');
       const jobData = {
-        title: cleanText(jobForm.title),
-        company: cleanText(jobForm.company),
-        location: cleanText(jobForm.location),
-        type: jobForm.type,
-        salary: cleanText(jobForm.salary),
-        salary_type: 'TJM',
-        description: cleanText(jobForm.description),
+        title: cleanText(jobForm.title || ''),
+        company: cleanText(jobForm.company || ''),
+        location: cleanText(jobForm.location || ''),
+        type: jobForm.type || 'Mission',         
+        salary: cleanText(jobForm.salary || ''),   
+        salary_type: jobForm.salaryType || 'TJM',  
+        description: cleanText(jobForm.description || ''),
         requirements: cleanText(jobForm.requirements || ''),
         benefits: cleanText(jobForm.benefits || ''),
         slug: generateSlug(cleanText(jobForm.title), cleanText(jobForm.location)),
@@ -666,15 +666,15 @@ const handleJobSubmit = async () => {
   // Fonction pour éditer un job
   const editJob = useCallback((job) => {
     setJobForm({
-      title: job.title,
-      company: job.company,
-      location: job.location,
-      type: job.type,
-      salary: job.salary,
-      salaryType: job.salary_type,
-      description: job.description,
-      requirements: Array.isArray(job.requirements) ? job.requirements.join('\n') : '',
-      benefits: Array.isArray(job.benefits) ? job.benefits.join('\n') : '',
+      title: job.title || '',           // ← Sécurité
+      company: job.company || '',       // ← Sécurité
+      location: job.location || '',     // ← Sécurité
+      type: job.type || 'Mission',      // ← Déjà bon
+      salary: job.salary || '',         // ← Sécurité
+      salaryType: job.salary_type || 'TJM',  // ← Sécurité
+      description: job.description || '',    // ← Sécurité
+      requirements: typeof job.requirements === 'string' ? job.requirements : '',
+      benefits: typeof job.benefits === 'string' ? job.benefits : '',
       featured: job.featured || false
     });
     setEditingJob(job);
