@@ -23,15 +23,11 @@ const MissionDetailPage = ({ darkMode }) => {
   });
 
   // ✅ FONCTION UTILITAIRE ROBUSTE ET OPTIMALE
-  const normalizeRequirements = (data) => {
-    if (!data) return [];
-    
-    const items = Array.isArray(data) ? data : String(data).split(/\r?\n/);
-    
-    return items
-      .map(item => String(item).trim())
-      .filter(Boolean);
-  };
+const normalizeRequirements = (data) => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  return data.split('\n').filter(Boolean);
+};
 
   // Charger la mission par slug
   useEffect(() => {
