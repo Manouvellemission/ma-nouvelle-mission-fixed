@@ -19,4 +19,14 @@ export default defineConfig({
     host: '0.0.0.0', // Permet l'accès depuis n'importe quel host
     port: 4173,
   },
+// ✅ AJOUT ICI - Section build pour les hashs
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]'
+      }
+    }
+  }
 })
