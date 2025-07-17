@@ -297,13 +297,23 @@ export const jobService = {
     });
 
     // ✅ FORMAT CORRIGÉ - Envoi de strings à la base
-    const cleanData = {
-      ...jobData,
-      requirements: typeof jobData.requirements === 'string' ? jobData.requirements : '',
-      benefits: typeof jobData.benefits === 'string' ? jobData.benefits : '',
-      applicants: jobData.applicants || 0,
-      created_at: new Date().toISOString()
-    };
+    // Dans jobService.js - createJob
+  const cleanData = {
+  ...jobData,
+  requirements: (() => {
+    // Vérification de type pour éviter tout conflit
+    if (typeof jobData.requirements !== 'string') return null;
+    const trimmed = jobData.requirements.trim();
+    return trimmed === '' ? null : trimmed;
+  })(),
+  benefits: (() => {
+    if (typeof jobData.benefits !== 'string') return null;
+    const trimmed = jobData.benefits.trim();
+    return trimmed === '' ? null : trimmed;
+  })(),
+  applicants: jobData.applicants || 0,
+  created_at: new Date().toISOString()
+};
 
     // Log du slug + taille du payload
     const payloadSize = new Blob([JSON.stringify(cleanData)]).size;
