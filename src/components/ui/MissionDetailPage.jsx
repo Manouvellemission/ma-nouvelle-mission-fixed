@@ -22,6 +22,17 @@ const MissionDetailPage = ({ darkMode }) => {
     cv: null
   });
 
+  // ✅ FONCTION UTILITAIRE ROBUSTE ET OPTIMALE
+  const normalizeRequirements = (data) => {
+    if (!data) return [];
+    
+    const items = Array.isArray(data) ? data : String(data).split(/\r?\n/);
+    
+    return items
+      .map(item => String(item).trim())
+      .filter(Boolean);
+  };
+
   // Charger la mission par slug
   useEffect(() => {
     const fetchJobBySlug = async () => {
@@ -157,6 +168,10 @@ const MissionDetailPage = ({ darkMode }) => {
     );
   }
 
+  // ✅ NORMALISATION DES DONNÉES AVEC FONCTION ROBUSTE
+  const requirementsTags = normalizeRequirements(job.requirements);
+  const benefitsTags = normalizeRequirements(job.benefits);
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -248,34 +263,34 @@ const MissionDetailPage = ({ darkMode }) => {
                 </p>
               </div>
 
-            {/* Exigences */}
-            {job.requirements && typeof job.requirements === 'string' && job.requirements.trim() && (
+            {/* ✅ SECTION EXIGENCES - SOLUTION OPTIMALE */}
+            {requirementsTags.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                   Exigences du poste
                 </h2>
                 <ul className="space-y-3">
-                  {job.requirements.split('\n').filter(req => req && req.trim()).map((req, index) => (
+                  {requirementsTags.map((req, index) => (
                     <li key={index} className="flex items-start">
                       <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300">{req.trim()}</span>
+                      <span className="text-gray-600 dark:text-gray-300">{req}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-          {/* Avantages */}
-          {job.benefits && typeof job.benefits === 'string' && job.benefits.trim() && (
+          {/* ✅ SECTION AVANTAGES - SOLUTION OPTIMALE */}
+          {benefitsTags.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 Avantages
               </h2>
               <ul className="space-y-3">
-                {job.benefits.split('\n').filter(benefit => benefit && benefit.trim()).map((benefit, index) => (
+                {benefitsTags.map((benefit, index) => (
                   <li key={index} className="flex items-start">
                     <CheckCircle className="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-600 dark:text-gray-300">{benefit.trim()}</span>
+                    <span className="text-gray-600 dark:text-gray-300">{benefit}</span>
                   </li>
                 ))}
               </ul>
