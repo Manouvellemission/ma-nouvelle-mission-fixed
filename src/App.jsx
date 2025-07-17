@@ -439,7 +439,7 @@ const handleJobSubmit = async () => {
         salary: cleanText(jobForm.salary),
         salary_type: 'TJM',
         description: cleanText(jobForm.description),
-        equirements: cleanText(jobForm.requirements || ''),
+        requirements: cleanText(jobForm.requirements || ''),
         benefits: cleanText(jobForm.benefits || ''),
         slug: generateSlug(cleanText(jobForm.title), cleanText(jobForm.location)),
         featured: Boolean(jobForm.featured),
