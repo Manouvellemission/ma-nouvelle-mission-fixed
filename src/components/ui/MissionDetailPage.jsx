@@ -248,39 +248,39 @@ const MissionDetailPage = ({ darkMode }) => {
                 </p>
               </div>
 
-              {/* Exigences */}
-              {job.requirements && (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    Exigences du poste
-                  </h2>
-                  <ul className="space-y-3">
-                    {job.requirements.split('\n').map((req, index) => (
-                      <li key={index} className="flex items-start">
-                        <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-600 dark:text-gray-300">{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-            {/* Avantages */}
-            {job.benefits && (
+            {/* Exigences */}
+            {job.requirements && typeof job.requirements === 'string' && job.requirements.trim() && (
               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                  Avantages
+                  Exigences du poste
                 </h2>
                 <ul className="space-y-3">
-                  {job.benefits.split('\n').map((benefit, index) => (
+                  {job.requirements.split('\n').filter(req => req && req.trim()).map((req, index) => (
                     <li key={index} className="flex items-start">
-                      <CheckCircle className="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300">{benefit}</span>
+                      <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-600 dark:text-gray-300">{req.trim()}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
+
+          {/* Avantages */}
+          {job.benefits && typeof job.benefits === 'string' && job.benefits.trim() && (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                Avantages
+              </h2>
+              <ul className="space-y-3">
+                {job.benefits.split('\n').filter(benefit => benefit && benefit.trim()).map((benefit, index) => (
+                  <li key={index} className="flex items-start">
+                    <CheckCircle className="w-5 h-5 text-blue-500 mr-3 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-600 dark:text-gray-300">{benefit.trim()}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
               
               {/* Formulaire de candidature */}
               <div id="application-form" className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
