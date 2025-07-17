@@ -379,13 +379,21 @@ export const jobService = {
     });
 
     try {
-      // ✅ FORMAT CORRIGÉ - Envoi de strings à la base
-     const cleanData = {
-        ...jobData,
-        requirements: jobData.requirements?.trim() || null,
-        benefits: jobData.benefits?.trim() || null,
-        updated_at: new Date().toISOString()
-      };
+    // ✅ FORMAT CORRIGÉ - Envoi de strings à la base
+        const cleanData = {
+          ...jobData,
+          requirements: (() => {
+            if (typeof jobData.requirements !== 'string') return null;
+            const trimmed = jobData.requirements.trim();
+            return trimmed === '' ? null : trimmed;
+          })(),
+          benefits: (() => {
+            if (typeof jobData.benefits !== 'string') return null;
+            const trimmed = jobData.benefits.trim();
+            return trimmed === '' ? null : trimmed;
+          })(),
+          updated_at: new Date().toISOString()
+        };
 
       console.log('[jobService.updateJob] Données préparées, envoi à Supabase...');
 
