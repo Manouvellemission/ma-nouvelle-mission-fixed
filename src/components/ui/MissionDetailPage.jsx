@@ -249,7 +249,7 @@ const MissionDetailPage = ({ darkMode }) => {
               </div>
 
               {/* Exigences */}
-              {job.requirements && job.requirements.length > 0 && (
+              {job.requirements && (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                     Exigences du poste
@@ -266,7 +266,7 @@ const MissionDetailPage = ({ darkMode }) => {
               )}
 
               {/* Avantages */}
-              {job.benefits && job.benefits.length > 0 && (
+              {job.benefits && (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                     Avantages
