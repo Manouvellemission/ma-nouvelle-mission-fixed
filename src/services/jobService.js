@@ -380,10 +380,10 @@ export const jobService = {
 
     try {
       // ✅ FORMAT CORRIGÉ - Envoi de strings à la base
-      const cleanData = {
+     const cleanData = {
         ...jobData,
-        requirements: typeof jobData.requirements === 'string' ? jobData.requirements : '',
-        benefits: typeof jobData.benefits === 'string' ? jobData.benefits : '',
+        requirements: jobData.requirements?.trim() || null,
+        benefits: jobData.benefits?.trim() || null,
         updated_at: new Date().toISOString()
       };
 
