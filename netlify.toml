@@ -25,22 +25,22 @@
   to = "/index.html"
   status = 200
 
-# Headers de sécurité
+# Headers de sécurité pour tout le site
 [[headers]]
-  for = "/*"
+for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    X-XSS-Protection = "1; mode=block"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+  X-Frame-Options = "DENY"
+  X-Content-Type-Options = "nosniff"
+  X-XSS-Protection = "1; mode=block"
+  Referrer-Policy = "strict-origin-when-cross-origin"
 
-    # Pas de cache pour index.html
-    [[headers]]
-    for = "/index.html"
-    [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma = "no-cache"
-    Expires = "0"
+# Désactiver complètement le cache pour index.html (SPA)
+[[headers]]
+for = "/index.html"
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
+  Pragma = "no-cache"
+  Expires = "0"
 
 # Headers pour les assets statiques
 [[headers]]
