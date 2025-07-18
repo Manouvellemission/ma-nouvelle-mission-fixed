@@ -669,22 +669,27 @@ const handleJobSubmit = async () => {
   }, [jobs]);
 
   // Fonction pour éditer un job
-  const editJob = useCallback((job) => {
-    setJobForm({
-      title: job.title || '',           // ← Sécurité
-      company: job.company || '',       // ← Sécurité
-      location: job.location || '',     // ← Sécurité
-      type: job.type || 'Mission',      // ← Déjà bon
-      salary: job.salary || '',         // ← Sécurité
-      salaryType: job.salary_type || 'TJM',  // ← Sécurité
-      description: job.description || '',    // ← Sécurité
-      requirements: typeof job.requirements === 'string' ? job.requirements : '',
-      benefits: typeof job.benefits === 'string' ? job.benefits : '',
-      featured: job.featured || false
-    });
-    setEditingJob(job);
-    setShowJobForm(true);
-  }, []);
+const editJob = useCallback((job) => {
+  setJobForm({
+    title: job.title || '',
+    company: job.company || '',
+    location: job.location || '',
+    type: job.type || 'Mission',
+    salary: job.salary || '',
+    salaryType: job.salary_type || 'TJM',
+    description: job.description || '',
+    requirements: Array.isArray(job.requirements)
+      ? job.requirements.join('\n')
+      : (typeof job.requirements === 'string' ? job.requirements : ''),
+    benefits: Array.isArray(job.benefits)
+      ? job.benefits.join('\n')
+      : (typeof job.benefits === 'string' ? job.benefits : ''),
+    featured: job.featured || false
+  });
+  setEditingJob(job);
+  setShowJobForm(true);
+}, []);
+
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
