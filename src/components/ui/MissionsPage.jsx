@@ -27,6 +27,8 @@ const MissionsPage = ({ darkMode }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [isDeletingJob, setIsDeletingJob] = useState(null);
+  const [showJobForm, setShowJobForm] = useState(false);
+  const [editingJob, setEditingJob] = useState(null);
 
   const { user, isAdmin = false, executeWithValidSession } = useAuth();
   const navigate = useNavigate();
@@ -94,8 +96,9 @@ const MissionsPage = ({ darkMode }) => {
 
   // Fonction d'édition
   const editJob = useCallback((job) => {
-    navigate('/', { state: { editingJob: job } });
-  }, [navigate]);
+    setEditingJob(job);
+    setShowJobForm(true);
+  }, []);
 
   // Fonction de suppression
   const deleteJob = async (id, title) => {
@@ -121,6 +124,27 @@ const MissionsPage = ({ darkMode }) => {
       alert('Erreur lors de la suppression : ' + error.message);
     } finally {
       setIsDeletingJob(null);
+    }
+  };
+
+  // Fonction de mise à jour
+  const handleUpdateJob = async () => {
+    try {
+      const executeAction = async () => {
+        await jobService.updateJob(editingJob.id, editingJob);
+      };
+
+      if (executeWithValidSession) {
+        await executeWithValidSession(executeAction);
+      } else {
+        await executeAction();
+      }
+
+      await loadJobs(currentPage);
+      setShowJobForm(false);
+      setEditingJob(null);
+    } catch (error) {
+      alert('Erreur lors de la mise à jour : ' + error.message);
     }
   };
 
@@ -384,6 +408,152 @@ const MissionsPage = ({ darkMode }) => {
           )}
         </div>
       </div>
+
+      {/* Modal de formulaire d'édition */}
+      {showJobForm && editingJob && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`bg-white dark:bg-gray-800 rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Modifier la mission
+              </h2>
+              <button
+                onClick={() => {
+                  setShowJobForm(false);
+                  setEditingJob(null);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdateJob();
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Titre de la mission
+                </label>
+                <input
+                  type="text"
+                  value={editingJob.title}
+                  onChange={(e) => setEditingJob({ ...editingJob, title: e.target.value })}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Titre de la mission"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Entreprise
+                </label>
+                <input
+                  type="text"
+                  value={editingJob.company}
+                  onChange={(e) => setEditingJob({ ...editingJob, company: e.target.value })}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Nom de l'entreprise"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Localisation
+                </label>
+                <input
+                  type="text"
+                  value={editingJob.location}
+                  onChange={(e) => setEditingJob({ ...editingJob, location: e.target.value })}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ville, Pays"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editingJob.description}
+                  onChange={(e) => setEditingJob({ ...editingJob, description: e.target.value })}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Description détaillée de la mission"
+                  rows="6"
+                  required
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Salaire
+                  </label>
+                  <input
+                    type="text"
+                    value={editingJob.salary || ''}
+                    onChange={(e) => setEditingJob({ ...editingJob, salary: e.target.value })}
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ex: 50-70K"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Type de salaire
+                  </label>
+                  <select
+                    value={editingJob.salary_type || 'par an'}
+                    onChange={(e) => setEditingJob({ ...editingJob, salary_type: e.target.value })}
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="par an">Par an</option>
+                    <option value="par mois">Par mois</option>
+                    <option value="par jour">Par jour</option>
+                    <option value="par heure">Par heure</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  checked={editingJob.featured || false}
+                  onChange={(e) => setEditingJob({ ...editingJob, featured: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <label htmlFor="featured" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Mission en vedette
+                </label>
+              </div>
+              
+              <div className="flex gap-4 mt-6">
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Enregistrer les modifications
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowJobForm(false);
+                    setEditingJob(null);
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
