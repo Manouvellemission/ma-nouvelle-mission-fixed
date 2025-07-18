@@ -26,8 +26,12 @@ const MissionDetailPage = ({ darkMode }) => {
 const normalizeRequirements = (data) => {
   if (!data) return [];
   if (Array.isArray(data)) return data;
-  return data.split('\n').filter(Boolean);
+  if (typeof data === 'string') {
+    return data.split('\n').map(item => item.trim()).filter(Boolean);
+  }
+  return [];
 };
+
 
   // Charger la mission par slug
   useEffect(() => {
