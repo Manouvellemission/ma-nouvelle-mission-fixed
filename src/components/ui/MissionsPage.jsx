@@ -4,7 +4,6 @@ import { Search, MapPin, Briefcase, Building, Euro, Filter, Sparkles, Users, Arr
 import { Link, useNavigate } from 'react-router-dom';
 import { fetchJobsPaginated, jobService } from '../../services/jobService';
 import { useAuth } from '../../contexts/AuthContext';
-import { useJobs } from '../../contexts/JobContext';
 import {
   Pagination,
   PaginationContent,
@@ -29,8 +28,7 @@ const MissionsPage = ({ darkMode }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [isDeletingJob, setIsDeletingJob] = useState(null);
 
-  const { user, isAdmin, executeWithValidSession } = useAuth();
-  const { dispatch, fetchJobs } = useJobs();
+  const { user, isAdmin = false, executeWithValidSession } = useAuth();
   const navigate = useNavigate();
 
   // Charger les missions avec pagination
@@ -39,10 +37,22 @@ const MissionsPage = ({ darkMode }) => {
     setError(null);
     try {
       const result = await fetchJobsPaginated(page, 12);
-      setJobs(result.jobs);
-      setTotalPages(result.totalPages);
-      setTotalCount(result.totalCount);
-      setCurrentPage(result.currentPage);
+      
+      // Vérifier si la page demandée est valide
+      if (page > result.totalPages && result.totalPages > 0) {
+        // Si on demande une page qui n'existe plus, charger la dernière page
+        const lastPage = result.totalPages;
+        const lastPageResult = await fetchJobsPaginated(lastPage, 12);
+        setJobs(lastPageResult.jobs);
+        setTotalPages(lastPageResult.totalPages);
+        setTotalCount(lastPageResult.totalCount);
+        setCurrentPage(lastPageResult.currentPage);
+      } else {
+        setJobs(result.jobs);
+        setTotalPages(result.totalPages);
+        setTotalCount(result.totalCount);
+        setCurrentPage(result.currentPage);
+      }
     } catch (error) {
       console.error('Erreur chargement missions:', error);
       setError('Erreur lors du chargement des missions');
@@ -98,7 +108,6 @@ const MissionsPage = ({ darkMode }) => {
     try {
       const executeAction = async () => {
         await jobService.deleteJob(id);
-        dispatch({ type: 'DELETE_JOB', payload: id });
       };
 
       if (executeWithValidSession) {
@@ -107,8 +116,7 @@ const MissionsPage = ({ darkMode }) => {
         await executeAction();
       }
 
-      await fetchJobs();
-      loadJobs(currentPage);
+      loadJobs(currentPage); // Recharge simplement les missions après suppression
     } catch (error) {
       alert('Erreur lors de la suppression : ' + error.message);
     } finally {
@@ -279,6 +287,7 @@ const MissionsPage = ({ darkMode }) => {
                             editJob(job);
                           }}
                           className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                          title="Modifier cette mission"
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           Modifier
@@ -291,13 +300,14 @@ const MissionsPage = ({ darkMode }) => {
                           }}
                           disabled={isDeletingJob === job.id}
                           className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title={isDeletingJob === job.id ? "Suppression en cours..." : "Supprimer cette mission"}
                         >
                           {isDeletingJob === job.id ? (
                             <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                           ) : (
                             <Trash2 className="w-4 h-4 mr-1" />
                           )}
-                          Supprimer
+                          {isDeletingJob === job.id ? 'Suppression...' : 'Supprimer'}
                         </button>
                       </div>
                     )}
