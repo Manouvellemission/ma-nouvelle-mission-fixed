@@ -300,20 +300,22 @@ export const jobService = {
     // Dans jobService.js - createJob
   const cleanData = {
   ...jobData,
-  requirements: (() => {
-    // Vérification de type pour éviter tout conflit
-    if (typeof jobData.requirements !== 'string') return null;
-    const trimmed = jobData.requirements.trim();
-    return trimmed === '' ? null : trimmed;
-  })(),
-  benefits: (() => {
-    if (typeof jobData.benefits !== 'string') return null;
-    const trimmed = jobData.benefits.trim();
-    return trimmed === '' ? null : trimmed;
-  })(),
+  requirements: Array.isArray(jobData.requirements)
+    ? jobData.requirements.join('\n').trim() || null
+    : typeof jobData.requirements === 'string' && jobData.requirements.trim() !== ''
+    ? jobData.requirements.trim()
+    : null,
+
+  benefits: Array.isArray(jobData.benefits)
+    ? jobData.benefits.join('\n').trim() || null
+    : typeof jobData.benefits === 'string' && jobData.benefits.trim() !== ''
+    ? jobData.benefits.trim()
+    : null,
+
   applicants: jobData.applicants || 0,
   created_at: new Date().toISOString()
 };
+
 
     // Log du slug + taille du payload
     const payloadSize = new Blob([JSON.stringify(cleanData)]).size;
@@ -380,20 +382,23 @@ export const jobService = {
 
     try {
     // ✅ FORMAT CORRIGÉ - Envoi de strings à la base
-        const cleanData = {
-          ...jobData,
-          requirements: (() => {
-            if (typeof jobData.requirements !== 'string') return null;
-            const trimmed = jobData.requirements.trim();
-            return trimmed === '' ? null : trimmed;
-          })(),
-          benefits: (() => {
-            if (typeof jobData.benefits !== 'string') return null;
-            const trimmed = jobData.benefits.trim();
-            return trimmed === '' ? null : trimmed;
-          })(),
-          updated_at: new Date().toISOString()
-        };
+       const cleanData = {
+  ...jobData,
+  requirements: Array.isArray(jobData.requirements)
+    ? jobData.requirements.join('\n').trim() || null
+    : typeof jobData.requirements === 'string' && jobData.requirements.trim() !== ''
+    ? jobData.requirements.trim()
+    : null,
+
+  benefits: Array.isArray(jobData.benefits)
+    ? jobData.benefits.join('\n').trim() || null
+    : typeof jobData.benefits === 'string' && jobData.benefits.trim() !== ''
+    ? jobData.benefits.trim()
+    : null,
+
+  applicants: jobData.applicants || 0,
+  created_at: new Date().toISOString()
+};
 
       console.log('[jobService.updateJob] Données préparées, envoi à Supabase...');
 
