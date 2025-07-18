@@ -190,10 +190,15 @@ const sanitizeJobData = (data) => {
     company: data.company?.trim(),
     location: data.location?.trim(),
     description: data.description?.trim(),
-    requirements: Array.isArray(data.requirements) ? data.requirements : [],
-    benefits: Array.isArray(data.benefits) ? data.benefits : []
+    requirements: typeof data.requirements === 'string'
+      ? data.requirements.trim()
+      : Array.isArray(data.requirements) ? data.requirements.join('\n').trim() : null,
+    benefits: typeof data.benefits === 'string'
+      ? data.benefits.trim()
+      : Array.isArray(data.benefits) ? data.benefits.join('\n').trim() : null,
   };
 };
+
 
 const generateSlug = (title, location) => {
   return `${title}-${location}`
