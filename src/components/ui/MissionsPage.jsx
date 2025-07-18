@@ -1,9 +1,10 @@
-// src/components/ui/MissionsPage.jsx - VERSION AVEC NAVIGATION VERS PAGE DÉDIÉE
-import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Briefcase, Building, Euro, Filter, Sparkles, Users, ArrowLeft, CheckCircle, X, ArrowRight, Loader2, AlertTriangle } from 'lucide-react';
+// src/components/ui/MissionsPage.jsx - VERSION AVEC NAVIGATION VERS PAGE DÉDIÉE + ÉDITION/SUPPRESSION
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, MapPin, Briefcase, Building, Euro, Filter, Sparkles, Users, ArrowLeft, CheckCircle, X, ArrowRight, Loader2, AlertTriangle, Edit, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { fetchJobsPaginated } from '../../services/jobService';
+import { fetchJobsPaginated, jobService } from '../../services/jobService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useJobs } from '../../contexts/JobContext';
 import {
   Pagination,
   PaginationContent,
@@ -26,8 +27,10 @@ const MissionsPage = ({ darkMode }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [isDeletingJob, setIsDeletingJob] = useState(null);
 
-  const { user } = useAuth();
+  const { user, isAdmin, executeWithValidSession } = useAuth();
+  const { dispatch, fetchJobs } = useJobs();
   const navigate = useNavigate();
 
   // Charger les missions avec pagination
@@ -77,6 +80,40 @@ const MissionsPage = ({ darkMode }) => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Fonction d'édition
+  const editJob = useCallback((job) => {
+    navigate('/', { state: { editingJob: job } });
+  }, [navigate]);
+
+  // Fonction de suppression
+  const deleteJob = async (id, title) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer la mission "${title}" ? Cette action est irréversible.`)) {
+      return;
+    }
+
+    setIsDeletingJob(id);
+
+    try {
+      const executeAction = async () => {
+        await jobService.deleteJob(id);
+        dispatch({ type: 'DELETE_JOB', payload: id });
+      };
+
+      if (executeWithValidSession) {
+        await executeWithValidSession(executeAction);
+      } else {
+        await executeAction();
+      }
+
+      await fetchJobs();
+      loadJobs(currentPage);
+    } catch (error) {
+      alert('Erreur lors de la suppression : ' + error.message);
+    } finally {
+      setIsDeletingJob(null);
+    }
   };
 
   return (
@@ -230,6 +267,38 @@ const MissionsPage = ({ darkMode }) => {
                           <Users className="w-4 h-4 mr-1" />
                           {job.applicants} candidature{job.applicants > 1 ? 's' : ''}
                         </span>
+                      </div>
+                    )}
+
+                    {/* Boutons d'édition et de suppression pour les admins */}
+                    {isAdmin && (
+                      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            editJob(job);
+                          }}
+                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Modifier
+                        </button>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteJob(job.id, job.title);
+                          }}
+                          disabled={isDeletingJob === job.id}
+                          className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isDeletingJob === job.id ? (
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 mr-1" />
+                          )}
+                          Supprimer
+                        </button>
                       </div>
                     )}
                   </div>
