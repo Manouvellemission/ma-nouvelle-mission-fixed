@@ -399,32 +399,32 @@ const JobBoardContent = () => {
   }, []);
 
   // Fonction de nettoyage automatique du texte
-// NOUVEAU CODE - VERSION SÉCURISÉE
 const cleanText = (text) => {
-  // Protection contre les valeurs nulles/undefined
   if (!text) return '';
   if (typeof text !== 'string') return String(text);
   
   try {
     return text
-      .replace(/\*\*(.*?)\*\*/g, '$1')     // **gras** → gras
-      .replace(/\*(.*?)\*/g, '$1')         // *italique* → italique
-      .replace(/__(.*?)__/g, '$1')         // __gras__ → gras
-      .replace(/_(.*?)_/g, '$1')           // _italique_ → italique
-      .replace(/`(.*?)`/g, '$1')           // `code` → code
-      .replace(/#{1,6}\s+/g, '')           // # titres → supprimé
-      .replace(/[""]/g, '"')               // Guillemets courbes → droits
-      .replace(/['']/g, "'")               // Apostrophes courbes → droites
-      .replace(/…/g, '...')                // Points de suspension
-      .replace(/–/g, '-')                  // Tiret long → court
-      .replace(/—/g, '-')                  // Tiret cadratin → court
-      .replace(/\s+/g, ' ')                // Espaces multiples → un seul
-      .replace(/\n\s*\n/g, '\n\n')         // Lignes vides multiples → max 2
-      .trim();                             // Supprimer espaces début/fin
-    
-      } catch (error) {
+      .replace(/\u200B/g, '')                   // Supprime les caractères invisibles (zero-width space)
+      .replace(/\u00A0/g, ' ')                  // Supprime les espaces insécables
+      .replace(/\r\n|\r|\n/g, '\n')             // Uniformise tous les retours à la ligne
+      .replace(/\*\*(.*?)\*\*/g, '$1')          // **gras** → gras
+      .replace(/\*(.*?)\*/g, '$1')              // *italique* → italique
+      .replace(/__(.*?)__/g, '$1')              // __gras__ → gras
+      .replace(/_(.*?)_/g, '$1')                // _italique_ → italique
+      .replace(/`(.*?)`/g, '$1')                // `code` → code
+      .replace(/#{1,6}\s+/g, '')                // # titres → supprimé
+      .replace(/[""]/g, '"')                    // Guillemets courbes → droits
+      .replace(/['']/g, "'")                    // Apostrophes courbes → droites
+      .replace(/…/g, '...')                     // Points de suspension
+      .replace(/–/g, '-')                       // Tiret long → court
+      .replace(/—/g, '-')                       // Tiret cadratin → court
+      .replace(/\s+/g, ' ')                     // Espaces multiples → un seul
+      .replace(/\n\s*\n/g, '\n\n')              // Lignes vides multiples → max 2
+      .trim();                                  // Supprime espaces début/fin
+  } catch (error) {
     console.warn('⚠️ Erreur cleanText pour:', text?.substring(0, 50), error);
-    return text; // Retourner le texte original en cas d'erreur
+    return text;
   }
 };
   
