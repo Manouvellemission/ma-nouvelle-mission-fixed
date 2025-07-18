@@ -438,7 +438,7 @@ const MissionsPage = ({ darkMode }) => {
                 </label>
                 <input
                   type="text"
-                  value={editingJob.title}
+                  value={editingJob.title || ''}
                   onChange={(e) => setEditingJob({ ...editingJob, title: e.target.value })}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Titre de la mission"
@@ -452,7 +452,7 @@ const MissionsPage = ({ darkMode }) => {
                 </label>
                 <input
                   type="text"
-                  value={editingJob.company}
+                  value={editingJob.company || ''}
                   onChange={(e) => setEditingJob({ ...editingJob, company: e.target.value })}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Nom de l'entreprise"
@@ -466,7 +466,7 @@ const MissionsPage = ({ darkMode }) => {
                 </label>
                 <input
                   type="text"
-                  value={editingJob.location}
+                  value={editingJob.location || ''}
                   onChange={(e) => setEditingJob({ ...editingJob, location: e.target.value })}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Ville, Pays"
@@ -479,7 +479,7 @@ const MissionsPage = ({ darkMode }) => {
                   Description
                 </label>
                 <textarea
-                  value={editingJob.description}
+                  value={editingJob.description || ''}
                   onChange={(e) => setEditingJob({ ...editingJob, description: e.target.value })}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Description détaillée de la mission"
@@ -488,34 +488,45 @@ const MissionsPage = ({ darkMode }) => {
                 />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Salaire
-                  </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Prérequis
+                </label>
+                <textarea
+                  value={editingJob.requirements || ''}
+                  onChange={(e) => setEditingJob({ ...editingJob, requirements: e.target.value })}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Prérequis (un par ligne)"
+                  rows="4"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Avantages
+                </label>
+                <textarea
+                  value={editingJob.benefits || ''}
+                  onChange={(e) => setEditingJob({ ...editingJob, benefits: e.target.value })}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Avantages (un par ligne)"
+                  rows="4"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  TJM (Taux Journalier Moyen)
+                </label>
+                <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={editingJob.salary || ''}
-                    onChange={(e) => setEditingJob({ ...editingJob, salary: e.target.value })}
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Ex: 50-70K"
+                    onChange={(e) => setEditingJob({ ...editingJob, salary: e.target.value, salary_type: 'par jour' })}
+                    className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ex: 500-700"
                   />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Type de salaire
-                  </label>
-                  <select
-                    value={editingJob.salary_type || 'par an'}
-                    onChange={(e) => setEditingJob({ ...editingJob, salary_type: e.target.value })}
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="par an">Par an</option>
-                    <option value="par mois">Par mois</option>
-                    <option value="par jour">Par jour</option>
-                    <option value="par heure">Par heure</option>
-                  </select>
+                  <span className="text-gray-600 dark:text-gray-300 font-medium">€ par jour</span>
                 </div>
               </div>
               
